@@ -1,0 +1,12 @@
+[package]
+name = "midi2key"
+version = "0.1.0"
+edition = "2021"
+build = "src/build.rs"
+
+[dependencies]
+midly = "0.5.2"
+midir = "0.8.0"
+
+[build-dependencies]
+winres = "0.1"
