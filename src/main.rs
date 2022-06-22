@@ -53,8 +53,7 @@ fn run() -> Result<(), Box<dyn Error>> {
     let _conn_in = midi_in.connect(
         in_port,
         "midir-read-input",
-        move |stamp, message, _| {
-            println!("{}: {:?} (len = {})", stamp, message, message.len());
+        move |_, message, _| {
             on_midi(message);
         },
         (),
@@ -75,15 +74,26 @@ fn run() -> Result<(), Box<dyn Error>> {
 fn on_midi(event: &[u8]) {
     let event = LiveEvent::parse(event).unwrap();
     match event {
-        LiveEvent::Midi { channel, message } => match message {
+        LiveEvent::Midi {
+            channel: _,
+            message,
+        } => match message {
             MidiMessage::NoteOn { key, vel } => {
-                println!(
-                    "hit note {} on channel {} with velocity {}",
-                    key, channel, vel
-                );
+                note_start(key.as_int(), vel.as_int());
+            }
+            MidiMessage::NoteOff { key, vel: _ } => {
+                note_end(key.as_int());
             }
             _ => {}
         },
         _ => {}
     }
+}
+
+fn note_start(key: u8, vel: u8) {
+    println!("hit note {} with vel {}", key, vel);
+}
+
+fn note_end(key: u8) {
+    println!("released note {}", key);
 }
