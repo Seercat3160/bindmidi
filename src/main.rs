@@ -1,5 +1,4 @@
 // Code from github.com/seercat3160/midi2key, under the MIT license
-// Adapted from https://github.com/Boddlnagg/midir/blob/e5980808e60570639ff4bb20bc983b08da9193c6/examples/test_read_input.rs, also under the MIT license
 
 use std::error::Error;
 use std::io::{stdin, stdout, Write};
@@ -7,13 +6,18 @@ use std::io::{stdin, stdout, Write};
 use midir::{Ignore, MidiInput};
 use midly::{live::LiveEvent, MidiMessage};
 
+use clap::Parser;
+
 fn main() {
+    let args = Args::parse();
+
     match run() {
         Ok(_) => (),
         Err(err) => println!("Error: {}", err),
     }
 }
 
+// Setup midir and connect to devices
 fn run() -> Result<(), Box<dyn Error>> {
     let mut input = String::new();
 
@@ -71,6 +75,7 @@ fn run() -> Result<(), Box<dyn Error>> {
     Ok(())
 }
 
+// Parse MIDI messages
 fn on_midi(event: &[u8]) {
     let event = LiveEvent::parse(event).unwrap();
     match event {
@@ -90,10 +95,25 @@ fn on_midi(event: &[u8]) {
     }
 }
 
+// Act on MIDI notes starting
 fn note_start(key: u8, vel: u8) {
     println!("hit note {} with vel {}", key, vel);
 }
 
+// Act on MIDI notes ending
 fn note_end(key: u8) {
     println!("released note {}", key);
+}
+
+// Parse arguments
+#[derive(Parser, Debug)]
+#[clap(author, version, about, long_about = None)]
+struct Args {
+    /// Config file location
+    #[clap(short, long, value_parser)]
+    config: String,
+
+    /// Verbose mode
+    #[clap(short, long, value_parser, default_value_t = false)]
+    verbose: bool,
 }

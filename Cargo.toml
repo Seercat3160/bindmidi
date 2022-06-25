@@ -1,12 +1,15 @@
 [package]
 name = "midi2key"
 version = "0.2.0"
+authors = ["Seercat3160"]
+description = "Bind MIDI notes to keyboard keys and mouse movement"
 edition = "2021"
 build = "src/build.rs"
 
 [dependencies]
 midly = "0.5.2"
 midir = "0.8.0"
+clap = { version = "3.2.6", features = ["derive", "unicode"] }
 
 [build-dependencies]
 winres = "0.1"
