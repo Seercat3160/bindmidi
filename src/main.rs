@@ -8,8 +8,12 @@ use midly::{live::LiveEvent, MidiMessage};
 
 use clap::Parser;
 
+use log::{info, warn};
+
 fn main() {
-    let args = Args::parse();
+    let _args = Args::parse();
+
+    simple_logger::SimpleLogger::new().init().unwrap();
 
     match run() {
         Ok(_) => (),
@@ -29,7 +33,7 @@ fn run() -> Result<(), Box<dyn Error>> {
     let in_port = match in_ports.len() {
         0 => return Err("no input port found".into()),
         1 => {
-            println!(
+            warn!(
                 "Choosing the only available input port: {}",
                 midi_in.port_name(&in_ports[0]).unwrap()
             );
@@ -63,7 +67,7 @@ fn run() -> Result<(), Box<dyn Error>> {
         (),
     )?;
 
-    println!(
+    warn!(
         "Connection open, reading input from '{}' (press enter to exit) ...",
         in_port_name
     );
@@ -71,7 +75,7 @@ fn run() -> Result<(), Box<dyn Error>> {
     input.clear();
     stdin().read_line(&mut input)?; // wait for next enter key press
 
-    println!("Closing connection");
+    warn!("Closing connection");
     Ok(())
 }
 
@@ -97,12 +101,12 @@ fn on_midi(event: &[u8]) {
 
 // Act on MIDI notes starting
 fn note_start(key: u8, vel: u8) {
-    println!("hit note {} with vel {}", key, vel);
+    info!("hit note {} with vel {}", key, vel);
 }
 
 // Act on MIDI notes ending
 fn note_end(key: u8) {
-    println!("released note {}", key);
+    info!("released note {}", key);
 }
 
 // Parse arguments

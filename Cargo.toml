@@ -7,9 +7,11 @@ edition = "2021"
 build = "src/build.rs"
 
 [dependencies]
-midly = "0.5.2"
-midir = "0.8.0"
-clap = { version = "3.2.6", features = ["derive", "unicode"] }
+midly = "0.5"
+midir = "0.8"
+clap = { version = "3.2", features = ["derive", "unicode"] }
+simple_logger = "4.0"
+log = "0.4"
 
 [build-dependencies]
 winres = "0.1"
