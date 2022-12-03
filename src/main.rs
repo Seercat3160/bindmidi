@@ -62,7 +62,28 @@ fn run() -> Result<(), Box<dyn Error>> {
         in_port,
         "midir-read-input",
         move |_, message, _| {
-            on_midi(message);
+            match LiveEvent::parse(message).unwrap() {
+                LiveEvent::Midi {
+                    channel: _,
+                    message,
+                } => match message {
+                    MidiMessage::NoteOn { key, vel } => {
+                        {
+                            let key = key.as_int();
+                            let vel = vel.as_int();
+                            info!("hit note {} with vel {}", key, vel);
+                        };
+                    }
+                    MidiMessage::NoteOff { key, vel: _ } => {
+                        {
+                            let key = key.as_int();
+                            info!("released note {}", key);
+                        };
+                    }
+                    _ => {}
+                },
+                _ => {}
+            };
         },
         (),
     )?;
@@ -78,37 +99,6 @@ fn run() -> Result<(), Box<dyn Error>> {
     warn!("Closing connection");
     Ok(())
 }
-
-// Parse MIDI messages
-fn on_midi(event: &[u8]) {
-    let event = LiveEvent::parse(event).unwrap();
-    match event {
-        LiveEvent::Midi {
-            channel: _,
-            message,
-        } => match message {
-            MidiMessage::NoteOn { key, vel } => {
-                note_start(key.as_int(), vel.as_int());
-            }
-            MidiMessage::NoteOff { key, vel: _ } => {
-                note_end(key.as_int());
-            }
-            _ => {}
-        },
-        _ => {}
-    }
-}
-
-// Act on MIDI notes starting
-fn note_start(key: u8, vel: u8) {
-    info!("hit note {} with vel {}", key, vel);
-}
-
-// Act on MIDI notes ending
-fn note_end(key: u8) {
-    info!("released note {}", key);
-}
-
 // Parse arguments
 #[derive(Parser, Debug)]
 #[clap(author, version, about, long_about = None)]
