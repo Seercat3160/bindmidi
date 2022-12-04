@@ -15,10 +15,6 @@ You can visit [GitHub Releases](https://github.com/Seercat3160/midi2key/releases
 
 If you want to use the latest version available, visit [Actions](https://github.com/Seercat3160/midi2key/actions) to download a binary for any commit. These will almost certainly be a work-in-progress with features half-baked, so steer clear unless you know it's what you need.
 
-### Building from Source
-
-You can also build from source, for example if you don't trust the pre-made releases or you want to use an unsupported platform. It's a standard project using Cargo, so install Rust with `rustup`, clone the repo or get a release's source archive, and run `cargo build --release`. The executable should be at `./target/release/midi2key.exe`.
-
 ## Usage
 
 Run the executable file in an interactive terminal (or just double-click on Windows if you don't need to specify args).
@@ -26,32 +22,64 @@ Run the executable file in an interactive terminal (or just double-click on Wind
 Current command-line arguments available:
 
 ```plaintext
-midi2key 0.2.0
-Seercat3160
 Bind MIDI notes to keyboard keys and mouse movement
 
-USAGE:
-    midi2key.exe [OPTIONS] --config <CONFIG>
+Usage: midi2key [OPTIONS]
 
-OPTIONS:
-    -c, --config <CONFIG>    Config file location
-    -h, --help               Print help information
-    -v, --verbose            Verbose mode
-    -V, --version            Print version information
+Options:
+  -v, --verbose        Verbose mode
+  -c, --config <FILE>  Config file location [default: config.json]
+  -h, --help           Print help information
+  -V, --version        Print version information
 ```
 
 You will be prompted to select which MIDI device to use if multiple are connected.
 
-### Configuration
+## Configuration
 
-At the moment, there is no real functionality. The program just prints details about keys pressed.
+To run the program, a config file must be present at either "config.json" in the directory which the executable is being run from, or at the path specified by the command line option `--config`. If this file is not present, it will be created and pre-filled with the contents of `config.default.json` in this repository.
 
-Due to this, there is no configuration necessary. In the future, however, a config file will be required to setup the key bindings and some other options. The location of this file will be specified with the command line option `-c`. If no config file exists there, it will be created with a default.
+### Available binding types
+
+- `trace`
+  - Prints a debug message
+  - **Arguments**: none
+- `kclick`
+  - Taps a key
+  - **Arguments**: key to click
+- `khold`
+  - Holds a key down as the note is held
+  - **Arguments**: key to click
+- `mclickl`
+  - Performs a left click
+  - **Arguments**: none
+- `mclickr`
+  - Performs a right click
+  - **Arguments**: none
+- `mholdl`
+  - Holds left click down as the note is held
+  - **Arguments**: none
+- `mholdr`
+  - Holds right click down as the note is held
+  - **Arguments**: none
+- `mmoverel`
+  - Moves the mouse relative to it's current position
+  - **Arguments**:
+    - **Integer**: pixels in the `x` direction
+    - **Integer**: pixels in the `y` direction
+- `mscrolly`
+  - Scrolls on the `y` axis - up and down
+  - **Arguments**:
+    - **Integer**: lines to scroll in the `y` direction
+- `mscrollx`
+  - Scrolls on the `x` axis - left and right
+  - **Arguments**:
+    - **Integer**: lines to scroll in the `x` direction
 
 ## Development
 
 First of all, thank you for considering contributing to this side project of mine.
 
-To build the project, follow the instructions in [the section about building from source](#building-from-source), without the `--release` flag of course.
-
 It's just a standard Cargo setup, nothing out of the ordinary. However, make sure you have [rustfmt](https://github.com/rust-lang/rustfmt) installed, and run it before commiting. Otherwise, the debug build Action (which is a pull request check) will fail on your code.
+
+To test the software without connecting a real MIDI device, I use [VMPK](https://sourceforge.net/projects/vmpk/).

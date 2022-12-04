@@ -2,8 +2,11 @@
 
 use std::collections::HashMap;
 use std::error::Error;
+use std::fs::File;
 use std::io::{stdin, stdout, Write};
+use std::path::Path;
 
+use enigo::{Enigo, Key, KeyboardControllable, MouseButton, MouseControllable};
 use midir::{Ignore, MidiInput};
 use midly::{live::LiveEvent, MidiMessage};
 
@@ -12,12 +15,19 @@ use clap::Parser;
 use log::{error, info, warn};
 
 fn main() {
-    let _args = Args::parse();
+    let args = Args::parse();
 
     simple_logger::SimpleLogger::new().init().unwrap();
 
+    let config_path = Path::new(&args.config);
+    // Check if config file exists
+    if !config_path.exists() {
+        let mut output = File::create(config_path).expect("couldn't create default config file");
+        write!(output, "{}", include_str!("../config.default.json")).unwrap();
+    }
+
     let config: Midi2keyConfig =
-        penguin_config::Deserializer::file_path("config.json").deserialize();
+        penguin_config::Deserializer::file_path(&args.config).deserialize();
 
     match run(config) {
         Ok(_) => (),
@@ -134,45 +144,117 @@ fn run(config: Midi2keyConfig) -> Result<(), Box<dyn Error>> {
     Ok(())
 }
 
-fn invoke_binding(binding: &str, args: &Vec<String>, state: bool, vel: &u8, key: &u8) {
+fn invoke_binding(binding: &str, args: &Vec<String>, state: bool, _vel: &u8, key: &u8) {
     // Binding is the string for the binding (verbatim from the config)
     // Args is the binding's args from the config
     // State = true -> note hit
     // State = false -> note release
     // Vel is the note's velocity, or 0 for a release
+    let mut enigo = Enigo::new();
 
-    match state {
-        true => match binding {
-            "trace" => {
-                warn!("Trace binding hit for key {} during note hit!", key)
+    match binding {
+        "trace" => match state {
+            true => warn!("Trace binding hit for key {} during note start!", key),
+            false => warn!("Trace binding hit for key {} during note release!", key),
+        },
+        "kclick" => match state {
+            true => {
+                if args.len() >= 1 {
+                    enigo.key_click(Key::Layout(args[0].chars().next().unwrap()));
+                }
             }
-            _ => {
-                error!(
-                    "Config contains non-implemented binding {} in key {}",
-                    binding, key
-                );
+            false => {}
+        },
+        "khold" => match state {
+            true => {
+                if args.len() >= 1 {
+                    enigo.key_down(Key::Layout(args[0].chars().next().unwrap()));
+                }
+            }
+            false => {
+                if args.len() >= 1 {
+                    enigo.key_up(Key::Layout(args[0].chars().next().unwrap()));
+                }
             }
         },
-        false => match binding {
-            "trace" => {
-                warn!("Trace binding hit for key {} during note release!", key)
+        "mclickl" => match state {
+            true => {
+                enigo.mouse_click(MouseButton::Left);
             }
-            _ => {
-                error!(
-                    "Config contains non-implemented binding {} in key {}",
-                    binding, key
-                );
+            false => {}
+        },
+        "mclickr" => match state {
+            true => {
+                enigo.mouse_click(MouseButton::Right);
+            }
+            false => {}
+        },
+        "mholdl" => match state {
+            true => {
+                enigo.mouse_down(MouseButton::Left);
+            }
+            false => {
+                enigo.mouse_up(MouseButton::Left);
             }
         },
+        "mholdr" => match state {
+            true => {
+                enigo.mouse_down(MouseButton::Right);
+            }
+            false => {
+                enigo.mouse_up(MouseButton::Right);
+            }
+        },
+        "mmoverel" => match state {
+            true => {
+                if args.len() >= 2 {
+                    let x = args[0].parse::<i32>().unwrap();
+                    let y = args[1].parse::<i32>().unwrap();
+
+                    enigo.mouse_move_relative(x, y);
+                }
+            }
+            false => {}
+        },
+        "mscrolly" => match state {
+            true => {
+                if args.len() >= 1 {
+                    let y = args[0].parse::<i32>().unwrap();
+
+                    enigo.mouse_scroll_y(y);
+                }
+            }
+            false => {}
+        },
+        "mscrollx" => match state {
+            true => {
+                if args.len() >= 1 {
+                    let x = args[0].parse::<i32>().unwrap();
+
+                    enigo.mouse_scroll_y(x);
+                }
+            }
+            false => {}
+        },
+        _ => {
+            error!(
+                "Config contains non-implemented binding {} in key {}",
+                binding, key
+            );
+        }
     }
 }
 // Parse arguments
 #[derive(Parser, Debug)]
-#[clap(author, version, about, long_about = None)]
+#[command(author, version, about, long_about = None)]
 struct Args {
     /// Verbose mode
-    #[clap(short, long, value_parser, default_value_t = false)]
+    #[arg(short, long, value_parser, default_value_t = false)]
     verbose: bool,
+
+    /// Config file location
+    #[arg(short, long, value_name = "FILE", default_value_t = String::from("config.json"))]
+    config: String,
 }
 
 // Config file
