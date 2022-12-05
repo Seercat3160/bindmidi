@@ -33,8 +33,7 @@ fn main() {
     // Get the config from the file
     let mut config: Midi2keyConfig =
         penguin_config::Deserializer::file_path(&args.config).deserialize();
-    
-    
+
     // Program argument overrides the config file
     if args.verbose == true {
         config.verbose = true;
