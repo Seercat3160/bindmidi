@@ -1,6 +1,6 @@
 [package]
 name = "midi2key"
-version = "0.2.0"
+version = "0.3.0"
 authors = ["Seercat3160"]
 description = "Bind MIDI notes to keyboard keys and mouse movement"
 edition = "2021"
