@@ -1,6 +1,8 @@
 // Code from github.com/seercat3160/midi2key, under the MIT license
 
-use std::collections::HashMap;
+mod config;
+use config::Midi2keyConfig;
+
 use std::error::Error;
 use std::fs::File;
 use std::io::{stdin, stdout, Write};
@@ -8,6 +10,7 @@ use std::path::Path;
 use std::process::exit;
 
 use enigo::{Enigo, Key, KeyboardControllable, MouseButton, MouseControllable};
+
 use midir::{Ignore, MidiInput};
 use midly::{live::LiveEvent, MidiMessage};
 
@@ -277,11 +280,4 @@ struct Args {
     /// Config file location
     #[arg(short, long, value_name = "FILE", default_value_t = String::from("config.json"))]
     config: String,
-}
-
-// Config file
-#[derive(penguin_config::Deserialize)]
-struct Midi2keyConfig {
-    bindings: HashMap<u8, HashMap<String, Vec<String>>>,
-    verbose: bool,
 }
