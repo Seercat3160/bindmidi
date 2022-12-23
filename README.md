@@ -53,40 +53,35 @@ To run the program, a config file must be present at either "config.json" in the
 
 ### Available binding types
 
-- `trace`
+- `Trace`
   - Prints a debug message
   - **Arguments**: none
-- `kclick`
-  - Taps a key
-  - **Arguments**: key to click
-- `khold`
-  - Holds a key down as the note is held
-  - **Arguments**: key to click
-- `mclickl`
-  - Performs a left click
-  - **Arguments**: none
-- `mclickr`
-  - Performs a right click
-  - **Arguments**: none
-- `mholdl`
-  - Holds left click down as the note is held
-  - **Arguments**: none
-- `mholdr`
-  - Holds right click down as the note is held
-  - **Arguments**: none
-- `mmoverel`
+- `PressKey`
+  - Simulates tapping a keyboard key
+  - **Arguments**:
+    - `key`: key to press
+- `HoldKey`
+  - Holds a keyboard key down as the note is held
+  - **Arguments**:
+    - `key`: key to hold
+- `Click`
+  - Simulates a mouse click
+  - **Arguments**:
+    - `button`: "LEFT" or "RIGHT" to indicate which mouse button
+- `HoldMouse`
+  - Holds a mouse button as the note is held
+  - **Arguments**:
+    - `button`: "LEFT" or "RIGHT" to indicate which mouse button
+- `MoveMouse`
   - Moves the mouse relative to it's current position
   - **Arguments**:
-    - **Integer**: pixels in the `x` direction
-    - **Integer**: pixels in the `y` direction
-- `mscrolly`
-  - Scrolls on the `y` axis - up and down
+    - `x`: pixels in the x direction (left and right) - Optional, defaults to 0
+    - `y`: pixels in the y direction (up and down) - Optional, defaults to 0
+- `Scroll`
+  - Scrolls the mouse wheel
   - **Arguments**:
-    - **Integer**: lines to scroll in the `y` direction
-- `mscrollx`
-  - Scrolls on the `x` axis - left and right
-  - **Arguments**:
-    - **Integer**: lines to scroll in the `x` direction
+    - `x`: lines to scroll in the x direction (left and right) - Optional, defaults to 0
+    - `y`: lines to scroll in the y direction (up and down) - Optional, defaults to 0
 
 ## Development
 
