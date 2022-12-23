@@ -4,7 +4,7 @@ mod config;
 use config::Midi2keyConfig;
 
 use std::error::Error;
-use std::fs::File;
+use std::fs::{read_to_string, File};
 use std::io::{stdin, stdout, Write};
 use std::path::Path;
 use std::process::exit;
@@ -33,9 +33,12 @@ fn main() {
         write!(output, "{}", include_str!("../config.default.json")).unwrap();
     }
 
-    // Get the config from the file
+    // Read config file to a string
+    let config_file_contents = read_to_string(config_path).expect("Couldn't read config file!");
+
+    // Deserialize
     let mut config: Midi2keyConfig =
-        penguin_config::Deserializer::file_path(&args.config).deserialize();
+        serde_json::from_str(&config_file_contents).expect("Invalid config file!");
 
     // Program argument overrides the config file
     if args.verbose == true {
