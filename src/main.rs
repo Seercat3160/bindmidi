@@ -1,19 +1,27 @@
 // Code from github.com/seercat3160/midi2key, under the MIT license
 
-use std::collections::HashMap;
+mod config;
+use config::{Binding, Midi2keyConfig, StubConfig};
+
 use std::error::Error;
-use std::fs::File;
+use std::fs::{read_to_string, File};
 use std::io::{stdin, stdout, Write};
 use std::path::Path;
 use std::process::exit;
 
 use enigo::{Enigo, Key, KeyboardControllable, MouseButton, MouseControllable};
+
 use midir::{Ignore, MidiInput};
 use midly::{live::LiveEvent, MidiMessage};
 
 use clap::Parser;
 
 use log::{error, info, warn};
+
+static CONFIG_VERSION: u8 = 1;
+
+#[cfg(test)]
+mod test;
 
 fn main() {
     // Parse program arguments
@@ -27,12 +35,25 @@ fn main() {
     if !config_path.exists() {
         warn!("No config file was found at the specified location ({}), so a default config was placed there.", args.config);
         let mut output = File::create(config_path).expect("couldn't create default config file");
-        write!(output, "{}", include_str!("../config.default.json")).unwrap();
+        write!(output, "{}", include_str!("../config.default.yml")).unwrap();
     }
 
-    // Get the config from the file
+    // Read config file to a string
+    let config_file_contents = read_to_string(config_path).expect("Couldn't read config file!");
+
+    // Check config file version against what is compatible
+    if serde_yaml::from_str::<StubConfig>(&config_file_contents)
+        .expect("Invalid config file!")
+        .version
+        != CONFIG_VERSION
+    {
+        error!("Config has unsupported version, this version of midi2key only supports config version {}!", CONFIG_VERSION);
+        exit(1);
+    }
+
+    // Deserialize full config
     let mut config: Midi2keyConfig =
-        penguin_config::Deserializer::file_path(&args.config).deserialize();
+        serde_yaml::from_str(&config_file_contents).expect("Invalid config file!");
 
     // Program argument overrides the config file
     if args.verbose == true {
@@ -43,6 +64,10 @@ fn main() {
     if config.bindings.len() == 0 && config.verbose == false {
         error!("The current config file contains no bindings - exiting!");
         exit(1);
+    }
+
+    if config.verbose {
+        info!("Config version: {}", config.version);
     }
 
     match run(config) {
@@ -101,42 +126,47 @@ fn run(config: Midi2keyConfig) -> Result<(), Box<dyn Error>> {
                         {
                             let key = key.as_int();
                             let vel = vel.as_int();
-                            if config.verbose { info!("hit note {} with vel {}", key, vel); }
+                            if config.verbose {
+                                info!("hit note {} with vel {}", key, vel);
+                            }
 
                             // Check if key bound in config, and if so execute any bindings
-                            if config.bindings.contains_key(&key) {
-                                match config.bindings.get(&key) {
-                                    Some(i) => {
-                                        for binding in i {
-                                            let binding_name = binding.0;
-                                            let binding_args = binding.1;
-
-                                            invoke_binding(binding_name, binding_args, true, &vel, &key)
-                                        }
-                                    },
-                                    None => error!("weird state that shouldn't be possible has been reached - type 1")
+                            match config.bindings.get(&key) {
+                                Some(i) => {
+                                    for binding in i {
+                                        invoke_binding(
+                                            binding,
+                                            BindingNoteState::NoteOn,
+                                            &vel,
+                                            &key,
+                                        )
+                                    }
                                 }
+                                None => {}
                             }
                         };
                     }
-                    MidiMessage::NoteOff { key, vel: _ } => {
+                    MidiMessage::NoteOff { key, vel } => {
                         {
                             let key = key.as_int();
-                            if config.verbose { info!("released note {}", key); }
+                            let vel = vel.as_int();
+                            if config.verbose {
+                                info!("released note {} with vel {}", key, vel);
+                            }
 
                             // Check if key bound in config, and if so execute any bindings
-                            if config.bindings.contains_key(&key) {
-                                match config.bindings.get(&key) {
-                                    Some(i) => {
-                                        for binding in i {
-                                            let binding_name = binding.0;
-                                            let binding_args = binding.1;
-
-                                            invoke_binding(binding_name, binding_args, false, &0, &key)
-                                        }
-                                    },
-                                    None => error!("weird state that shouldn't be possible has been reached - type 2")
+                            match config.bindings.get(&key) {
+                                Some(i) => {
+                                    for binding in i {
+                                        invoke_binding(
+                                            binding,
+                                            BindingNoteState::NoteOff,
+                                            &vel,
+                                            &key,
+                                        )
+                                    }
                                 }
+                                None => {}
                             }
                         };
                     }
@@ -160,111 +190,82 @@ fn run(config: Midi2keyConfig) -> Result<(), Box<dyn Error>> {
     Ok(())
 }
 
-fn invoke_binding(binding: &str, args: &Vec<String>, state: bool, vel: &u8, key: &u8) {
-    // Binding is the string for the binding (verbatim from the config)
-    // Args is the binding's args from the config
-    // State = true -> note hit
-    // State = false -> note release
-    // Vel is the note's velocity, or 0 for a release
+fn invoke_binding(binding: &Binding, state: BindingNoteState, vel: &u8, key: &u8) {
+    use BindingNoteState::{NoteOff, NoteOn};
+
     let mut enigo = Enigo::new();
 
     match binding {
-        "trace" => match state {
-            true => warn!(
+        Binding::Trace => match state {
+            NoteOn => warn!(
                 "Trace binding hit during note start! Note: {}, Velocity: {}",
                 key, vel
             ),
-            false => warn!(
+            NoteOff => warn!(
                 "Trace binding hit during note release! Note: {}, Velocity: {}",
                 key, vel
             ),
         },
-        "kclick" => match state {
-            true => {
-                if args.len() >= 1 {
-                    enigo.key_click(Key::Layout(args[0].chars().next().unwrap()));
+        Binding::PressKey(b) => match state {
+            NoteOn => {
+                enigo.key_click(Key::Layout(b.key));
+            }
+            _ => {}
+        },
+        Binding::HoldKey(b) => match state {
+            NoteOn => {
+                enigo.key_down(Key::Layout(b.key));
+            }
+            NoteOff => enigo.key_up(Key::Layout(b.key)),
+        },
+        Binding::Click(b) => match state {
+            NoteOn => match b.button {
+                config::MouseButton::Left => {
+                    enigo.mouse_click(MouseButton::Left);
                 }
-            }
-            false => {}
-        },
-        "khold" => match state {
-            true => {
-                if args.len() >= 1 {
-                    enigo.key_down(Key::Layout(args[0].chars().next().unwrap()));
+                config::MouseButton::Right => {
+                    enigo.mouse_click(MouseButton::Right);
                 }
-            }
-            false => {
-                if args.len() >= 1 {
-                    enigo.key_up(Key::Layout(args[0].chars().next().unwrap()));
+            },
+            _ => {}
+        },
+        Binding::HoldMouse(b) => match state {
+            NoteOn => match b.button {
+                config::MouseButton::Left => {
+                    enigo.mouse_down(MouseButton::Left);
                 }
-            }
-        },
-        "mclickl" => match state {
-            true => {
-                enigo.mouse_click(MouseButton::Left);
-            }
-            false => {}
-        },
-        "mclickr" => match state {
-            true => {
-                enigo.mouse_click(MouseButton::Right);
-            }
-            false => {}
-        },
-        "mholdl" => match state {
-            true => {
-                enigo.mouse_down(MouseButton::Left);
-            }
-            false => {
-                enigo.mouse_up(MouseButton::Left);
-            }
-        },
-        "mholdr" => match state {
-            true => {
-                enigo.mouse_down(MouseButton::Right);
-            }
-            false => {
-                enigo.mouse_up(MouseButton::Right);
-            }
-        },
-        "mmoverel" => match state {
-            true => {
-                if args.len() >= 2 {
-                    let x = args[0].parse::<i32>().unwrap();
-                    let y = args[1].parse::<i32>().unwrap();
-
-                    enigo.mouse_move_relative(x, y);
+                config::MouseButton::Right => {
+                    enigo.mouse_down(MouseButton::Right);
                 }
-            }
-            false => {}
-        },
-        "mscrolly" => match state {
-            true => {
-                if args.len() >= 1 {
-                    let y = args[0].parse::<i32>().unwrap();
-
-                    enigo.mouse_scroll_y(y);
+            },
+            NoteOff => match b.button {
+                config::MouseButton::Left => {
+                    enigo.mouse_up(MouseButton::Left);
                 }
-            }
-            false => {}
-        },
-        "mscrollx" => match state {
-            true => {
-                if args.len() >= 1 {
-                    let x = args[0].parse::<i32>().unwrap();
-
-                    enigo.mouse_scroll_y(x);
+                config::MouseButton::Right => {
+                    enigo.mouse_up(MouseButton::Right);
                 }
-            }
-            false => {}
+            },
         },
-        _ => {
-            error!(
-                "Config contains non-implemented binding {} in key {}",
-                binding, key
-            );
-        }
+        Binding::MoveMouse(b) => match state {
+            NoteOn => {
+                enigo.mouse_move_relative(b.x, b.y);
+            }
+            _ => {}
+        },
+        Binding::Scroll(b) => match state {
+            NoteOn => {
+                enigo.mouse_scroll_x(b.x);
+                enigo.mouse_scroll_y(b.y);
+            }
+            _ => {}
+        },
     }
+}
+
+enum BindingNoteState {
+    NoteOn,
+    NoteOff,
 }
 // Parse arguments
 #[derive(Parser, Debug)]
@@ -275,13 +276,6 @@ struct Args {
     verbose: bool,
 
     /// Config file location
-    #[arg(short, long, value_name = "FILE", default_value_t = String::from("config.json"))]
+    #[arg(short, long, value_name = "FILE", default_value_t = String::from("config.yml"))]
     config: String,
-}
-
-// Config file
-#[derive(penguin_config::Deserialize)]
-struct Midi2keyConfig {
-    bindings: HashMap<u8, HashMap<String, Vec<String>>>,
-    verbose: bool,
 }

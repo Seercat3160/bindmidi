@@ -40,7 +40,7 @@ Usage: midi2key [OPTIONS]
 
 Options:
   -v, --verbose        Verbose mode
-  -c, --config <FILE>  Config file location [default: config.json]
+  -c, --config <FILE>  Config file location [default: config.yml]
   -h, --help           Print help information
   -V, --version        Print version information
 ```
@@ -49,44 +49,39 @@ You will be prompted to select which MIDI device to use if multiple are connecte
 
 ## Configuration
 
-To run the program, a config file must be present at either "config.json" in the directory which the executable is being run from, or at the path specified by the command line option `--config`. If this file is not present, it will be created and pre-filled with the contents of `config.default.json` in this repository.
+To run the program, a config file must be present at either "config.yml" in the directory which the executable is being run from, or at the path specified by the command line option `--config`. If this file is not present, it will be created and pre-filled with the contents of `config.default.yml` in this repository.
 
 ### Available binding types
 
-- `trace`
+- `Trace`
   - Prints a debug message
   - **Arguments**: none
-- `kclick`
-  - Taps a key
-  - **Arguments**: key to click
-- `khold`
-  - Holds a key down as the note is held
-  - **Arguments**: key to click
-- `mclickl`
-  - Performs a left click
-  - **Arguments**: none
-- `mclickr`
-  - Performs a right click
-  - **Arguments**: none
-- `mholdl`
-  - Holds left click down as the note is held
-  - **Arguments**: none
-- `mholdr`
-  - Holds right click down as the note is held
-  - **Arguments**: none
-- `mmoverel`
+- `PressKey`
+  - Simulates tapping a keyboard key
+  - **Arguments**:
+    - `key`: key to press
+- `HoldKey`
+  - Holds a keyboard key down as the note is held
+  - **Arguments**:
+    - `key`: key to hold
+- `Click`
+  - Simulates a mouse click
+  - **Arguments**:
+    - `button`: "Left" or "Right" to indicate which mouse button
+- `HoldMouse`
+  - Holds a mouse button as the note is held
+  - **Arguments**:
+    - `button`: "Left" or "Right" to indicate which mouse button
+- `MoveMouse`
   - Moves the mouse relative to it's current position
   - **Arguments**:
-    - **Integer**: pixels in the `x` direction
-    - **Integer**: pixels in the `y` direction
-- `mscrolly`
-  - Scrolls on the `y` axis - up and down
+    - `x`: pixels in the x direction (left and right) - Optional, defaults to 0
+    - `y`: pixels in the y direction (up and down) - Optional, defaults to 0
+- `Scroll`
+  - Scrolls the mouse wheel
   - **Arguments**:
-    - **Integer**: lines to scroll in the `y` direction
-- `mscrollx`
-  - Scrolls on the `x` axis - left and right
-  - **Arguments**:
-    - **Integer**: lines to scroll in the `x` direction
+    - `x`: lines to scroll in the x direction (left and right) - Optional, defaults to 0
+    - `y`: lines to scroll in the y direction (up and down) - Optional, defaults to 0
 
 ## Development
 
