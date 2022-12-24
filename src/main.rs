@@ -20,6 +20,9 @@ use log::{error, info, warn};
 
 static CONFIG_VERSION: u8 = 1;
 
+#[cfg(test)]
+mod test;
+
 fn main() {
     // Parse program arguments
     let args = Args::parse();
