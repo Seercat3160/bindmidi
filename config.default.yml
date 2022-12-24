@@ -1,0 +1,6 @@
+verbose: false
+bindings:
+  60:
+    - bind: Trace
+    - bind: MoveMouse
+      x: 100

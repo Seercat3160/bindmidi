@@ -30,7 +30,7 @@ fn main() {
     if !config_path.exists() {
         warn!("No config file was found at the specified location ({}), so a default config was placed there.", args.config);
         let mut output = File::create(config_path).expect("couldn't create default config file");
-        write!(output, "{}", include_str!("../config.default.json")).unwrap();
+        write!(output, "{}", include_str!("../config.default.yml")).unwrap();
     }
 
     // Read config file to a string
@@ -38,7 +38,7 @@ fn main() {
 
     // Deserialize
     let mut config: Midi2keyConfig =
-        serde_json::from_str(&config_file_contents).expect("Invalid config file!");
+        serde_yaml::from_str(&config_file_contents).expect("Invalid config file!");
 
     // Program argument overrides the config file
     if args.verbose == true {
@@ -257,6 +257,6 @@ struct Args {
     verbose: bool,
 
     /// Config file location
-    #[arg(short, long, value_name = "FILE", default_value_t = String::from("config.json"))]
+    #[arg(short, long, value_name = "FILE", default_value_t = String::from("config.yml"))]
     config: String,
 }

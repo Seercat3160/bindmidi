@@ -40,7 +40,7 @@ Usage: midi2key [OPTIONS]
 
 Options:
   -v, --verbose        Verbose mode
-  -c, --config <FILE>  Config file location [default: config.json]
+  -c, --config <FILE>  Config file location [default: config.yml]
   -h, --help           Print help information
   -V, --version        Print version information
 ```
@@ -49,7 +49,7 @@ You will be prompted to select which MIDI device to use if multiple are connecte
 
 ## Configuration
 
-To run the program, a config file must be present at either "config.json" in the directory which the executable is being run from, or at the path specified by the command line option `--config`. If this file is not present, it will be created and pre-filled with the contents of `config.default.json` in this repository.
+To run the program, a config file must be present at either "config.yml" in the directory which the executable is being run from, or at the path specified by the command line option `--config`. If this file is not present, it will be created and pre-filled with the contents of `config.default.yml` in this repository.
 
 ### Available binding types
 

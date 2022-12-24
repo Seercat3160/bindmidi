@@ -9,6 +9,7 @@ pub(crate) struct Midi2keyConfig {
 }
 
 #[derive(Deserialize)]
+#[serde(tag = "bind")]
 pub(crate) enum Binding {
     Trace,
     PressKey(PressKeyBinding),
