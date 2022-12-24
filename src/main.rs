@@ -201,10 +201,10 @@ fn invoke_binding(binding: &Binding, state: BindingNoteState, vel: &u8, key: &u8
         },
         Binding::Click(b) => match state {
             NoteOn => match b.button {
-                config::MouseButton::LEFT => {
+                config::MouseButton::Left => {
                     enigo.mouse_click(MouseButton::Left);
                 }
-                config::MouseButton::RIGHT => {
+                config::MouseButton::Right => {
                     enigo.mouse_click(MouseButton::Right);
                 }
             },
@@ -212,18 +212,18 @@ fn invoke_binding(binding: &Binding, state: BindingNoteState, vel: &u8, key: &u8
         },
         Binding::HoldMouse(b) => match state {
             NoteOn => match b.button {
-                config::MouseButton::LEFT => {
+                config::MouseButton::Left => {
                     enigo.mouse_down(MouseButton::Left);
                 }
-                config::MouseButton::RIGHT => {
+                config::MouseButton::Right => {
                     enigo.mouse_down(MouseButton::Right);
                 }
             },
             NoteOff => match b.button {
-                config::MouseButton::LEFT => {
+                config::MouseButton::Left => {
                     enigo.mouse_up(MouseButton::Left);
                 }
-                config::MouseButton::RIGHT => {
+                config::MouseButton::Right => {
                     enigo.mouse_up(MouseButton::Right);
                 }
             },

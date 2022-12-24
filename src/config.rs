@@ -32,8 +32,8 @@ pub(crate) struct HoldKeyBinding {
 
 #[derive(Deserialize)]
 pub(crate) enum MouseButton {
-    LEFT,
-    RIGHT,
+    Left,
+    Right,
 }
 
 #[derive(Deserialize)]

@@ -67,11 +67,11 @@ To run the program, a config file must be present at either "config.yml" in the 
 - `Click`
   - Simulates a mouse click
   - **Arguments**:
-    - `button`: "LEFT" or "RIGHT" to indicate which mouse button
+    - `button`: "Left" or "Right" to indicate which mouse button
 - `HoldMouse`
   - Holds a mouse button as the note is held
   - **Arguments**:
-    - `button`: "LEFT" or "RIGHT" to indicate which mouse button
+    - `button`: "Left" or "Right" to indicate which mouse button
 - `MoveMouse`
   - Moves the mouse relative to it's current position
   - **Arguments**:
