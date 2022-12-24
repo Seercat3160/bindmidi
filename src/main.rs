@@ -42,11 +42,15 @@ fn main() {
     let config_file_contents = read_to_string(config_path).expect("Couldn't read config file!");
 
     // Check config file version against what is compatible
-    if serde_yaml::from_str::<StubConfig>(&config_file_contents).expect("Invalid config file!").version != CONFIG_VERSION {
+    if serde_yaml::from_str::<StubConfig>(&config_file_contents)
+        .expect("Invalid config file!")
+        .version
+        != CONFIG_VERSION
+    {
         error!("Config has unsupported version, this version of midi2key only supports config version {}!", CONFIG_VERSION);
         exit(1);
     }
-    
+
     // Deserialize full config
     let mut config: Midi2keyConfig =
         serde_yaml::from_str(&config_file_contents).expect("Invalid config file!");

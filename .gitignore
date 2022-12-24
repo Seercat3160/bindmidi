@@ -1,7 +1,6 @@
 # File created using '.gitignore Generator' for Visual Studio Code: https://bit.ly/vscode-gig
-
-# Created by https://www.toptal.com/developers/gitignore/api/windows,visualstudiocode,git,linux,macos,rust
-# Edit at https://www.toptal.com/developers/gitignore?templates=windows,visualstudiocode,git,linux,macos,rust
+# Created by https://www.toptal.com/developers/gitignore/api/visualstudiocode,vim,rust,macos,linux,git,windows
+# Edit at https://www.toptal.com/developers/gitignore?templates=visualstudiocode,vim,rust,macos,linux,git,windows
 
 ### Git ###
 # Created by git for backups. To disable backups in Git:
@@ -40,8 +39,7 @@
 .LSOverride
 
 # Icon must end with two \r
-Icon
-
+Icon
 
 # Thumbnails
 ._*
@@ -82,6 +80,26 @@ Cargo.lock
 # MSVC Windows builds of rustc generate these, which store debugging information
 *.pdb
 
+### Vim ###
+# Swap
+[._]*.s[a-v][a-z]
+!*.svg  # comment out if you don't need vector files
+[._]*.sw[a-p]
+[._]s[a-rt-v][a-z]
+[._]ss[a-gi-z]
+[._]sw[a-p]
+
+# Session
+Session.vim
+Sessionx.vim
+
+# Temporary
+.netrwhist
+# Auto-generated tag files
+tags
+# Persistent undo
+[._]*.un~
+
 ### VisualStudioCode ###
 .vscode/*
 !.vscode/settings.json
@@ -100,12 +118,6 @@ Cargo.lock
 # Ignore all local history of files
 .history
 .ionide
-
-# Support for Project snippet scope
-.vscode/*.code-snippets
-
-# Ignore code-workspaces
-*.code-workspace
 
 ### Windows ###
 # Windows thumbnail cache files
@@ -133,7 +145,7 @@ $RECYCLE.BIN/
 # Windows shortcuts
 *.lnk
 
-# End of https://www.toptal.com/developers/gitignore/api/windows,visualstudiocode,git,linux,macos,rust
+# End of https://www.toptal.com/developers/gitignore/api/visualstudiocode,vim,rust,macos,linux,git,windows
 
 # Custom rules (everything added below won't be overriden by 'Generate .gitignore File' if you use 'Update' option)
 

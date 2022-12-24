@@ -11,7 +11,7 @@ pub(crate) struct Midi2keyConfig {
 
 #[derive(Deserialize)]
 pub(crate) struct StubConfig {
-    pub(crate) version: u8 
+    pub(crate) version: u8,
 }
 
 #[derive(Deserialize)]
