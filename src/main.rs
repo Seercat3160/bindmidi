@@ -1,7 +1,7 @@
 // Code from github.com/seercat3160/midi2key, under the MIT license
 
 mod config;
-use config::{Binding, Midi2keyConfig};
+use config::{Binding, Midi2keyConfig, StubConfig};
 
 use std::error::Error;
 use std::fs::{read_to_string, File};
@@ -17,6 +17,8 @@ use midly::{live::LiveEvent, MidiMessage};
 use clap::Parser;
 
 use log::{error, info, warn};
+
+static CONFIG_VERSION: u8 = 1;
 
 fn main() {
     // Parse program arguments
@@ -36,7 +38,13 @@ fn main() {
     // Read config file to a string
     let config_file_contents = read_to_string(config_path).expect("Couldn't read config file!");
 
-    // Deserialize
+    // Check config file version against what is compatible
+    if serde_yaml::from_str::<StubConfig>(&config_file_contents).expect("Invalid config file!").version != CONFIG_VERSION {
+        error!("Config has unsupported version, this version of midi2key only supports config version {}!", CONFIG_VERSION);
+        exit(1);
+    }
+    
+    // Deserialize full config
     let mut config: Midi2keyConfig =
         serde_yaml::from_str(&config_file_contents).expect("Invalid config file!");
 
@@ -49,6 +57,10 @@ fn main() {
     if config.bindings.len() == 0 && config.verbose == false {
         error!("The current config file contains no bindings - exiting!");
         exit(1);
+    }
+
+    if config.verbose {
+        info!("Config version: {}", config.version);
     }
 
     match run(config) {
