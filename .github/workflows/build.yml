@@ -1,0 +1,44 @@
+name: Build
+
+on:
+  push:
+    tags:
+      - "v*"
+    branches:
+      - "master"
+  pull_request:
+
+env:
+  CARGO_TERM_COLOR: always
+
+jobs:
+  build:
+    strategy:
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+        include:
+          - os: windows-latest
+            os-name: Windows
+            artifact-path: |
+              target/release/midi2key.exe
+          - os: ubuntu-latest
+            os-name: Linux
+            artifact-path: |
+              target/release/midi2key
+    
+    runs-on: ${{ matrix.os }}
+    name: ${{ matrix.os-name }} Build
+
+    steps:
+      - uses: actions/checkout@v3
+      - name: Check Formatting
+        run: cargo fmt --check
+      - name: Build
+        run: cargo build --verbose --release
+      - name: Test
+        run: cargo test --verbose
+      - name: Upload a Build Artifact
+        uses: actions/upload-artifact@v3.1.0
+        with:
+          name: ${{ matrix.os-name }}
+          path: ${{ matrix.artifact-path }}

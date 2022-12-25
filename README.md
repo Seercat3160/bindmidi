@@ -6,8 +6,7 @@ Midi2key is a simple program, written in Rust, to allow MIDI notes to trigger ty
 
 It has been tested on Windows and Linux (X11), and should theoretically work on MacOS as well. Linux Wayland support is not currently possible, but planned.
 
-[![Debug Build](https://github.com/Seercat3160/midi2key/actions/workflows/rust-debug.yml/badge.svg)](https://github.com/Seercat3160/midi2key/actions/workflows/rust-debug.yml)
-[![Release Build](https://github.com/Seercat3160/midi2key/actions/workflows/rust-release.yml/badge.svg)](https://github.com/Seercat3160/midi2key/actions/workflows/rust-release.yml)
+[![Build Status](https://github.com/Seercat3160/midi2key/actions/workflows/build.yml/badge.svg)](https://github.com/Seercat3160/midi2key/actions/workflows/build.yml)
 
 ## Features
 
