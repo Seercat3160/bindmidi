@@ -31,6 +31,12 @@ jobs:
 
     steps:
       - uses: actions/checkout@v3
+      - name: Install Linux Dependencies
+        if: ${{ matrix.os == 'ubuntu-latest' }}
+        run: |
+          sudo apt-get update
+          sudo apt-get install libasound2-dev 
+          sudo apt-get install libxdo-dev
       - name: Check Formatting
         run: cargo fmt --check
       - name: Build
