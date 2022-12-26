@@ -76,7 +76,7 @@ fn main() {
 
     match run(config) {
         Ok(_) => (),
-        Err(err) => println!("Error: {}", err),
+        Err(err) => println!("Error: {err}"),
     }
 }
 
@@ -101,7 +101,7 @@ fn run(config: Midi2keyConfig) -> Result<(), Box<dyn Error>> {
         _ => {
             println!("\nAvailable input ports:");
             for (i, p) in in_ports.iter().enumerate() {
-                println!("{}: {}", i, midi_in.port_name(p).unwrap());
+                println!("{i}: {}", midi_in.port_name(p).unwrap());
             }
             print!("Please select input port: ");
             stdout().flush()?;
