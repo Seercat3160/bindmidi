@@ -1,7 +1,8 @@
 // Code from github.com/seercat3160/midi2key, under the MIT license
 
-mod config;
-use config::{Binding, Midi2keyConfig, StubConfig};
+mod common;
+use common::config::{Binding, Midi2keyConfig, StubConfig};
+
 use musical_scales::Pitch;
 
 use std::error::Error;
@@ -10,7 +11,7 @@ use std::io::{stdin, stdout, Write};
 use std::path::Path;
 use std::process::exit;
 
-use enigo::{Enigo, Key, KeyboardControllable, MouseButton, MouseControllable};
+use enigo::{Enigo, Key, KeyboardControllable, MouseControllable};
 
 use midir::{Ignore, MidiInput};
 use midly::{live::LiveEvent, MidiMessage};
@@ -220,33 +221,12 @@ fn invoke_binding(binding: &Binding, state: BindingNoteState, vel: &u8, key: &u8
             NoteOff => enigo.key_up(Key::Layout(b.key)),
         },
         Binding::Click(b) => match state {
-            NoteOn => match b.button {
-                config::MouseButton::Left => {
-                    enigo.mouse_click(MouseButton::Left);
-                }
-                config::MouseButton::Right => {
-                    enigo.mouse_click(MouseButton::Right);
-                }
-            },
+            NoteOn => enigo.mouse_click(b.button.into()),
             _ => {}
         },
         Binding::HoldMouse(b) => match state {
-            NoteOn => match b.button {
-                config::MouseButton::Left => {
-                    enigo.mouse_down(MouseButton::Left);
-                }
-                config::MouseButton::Right => {
-                    enigo.mouse_down(MouseButton::Right);
-                }
-            },
-            NoteOff => match b.button {
-                config::MouseButton::Left => {
-                    enigo.mouse_up(MouseButton::Left);
-                }
-                config::MouseButton::Right => {
-                    enigo.mouse_up(MouseButton::Right);
-                }
-            },
+            NoteOn => enigo.mouse_down(b.button.into()),
+            NoteOff => enigo.mouse_up(b.button.into()),
         },
         Binding::MoveMouse(b) => match state {
             NoteOn => {

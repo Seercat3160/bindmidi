@@ -37,10 +37,19 @@ pub(crate) struct HoldKeyBinding {
     pub(crate) key: char,
 }
 
-#[derive(Deserialize)]
+#[derive(Deserialize, Clone, Copy)]
 pub(crate) enum MouseButton {
     Left,
     Right,
+}
+
+impl Into<enigo::MouseButton> for MouseButton {
+    fn into(self) -> enigo::MouseButton {
+        match self {
+            MouseButton::Left => enigo::MouseButton::Left,
+            MouseButton::Right => enigo::MouseButton::Right,
+        }
+    }
 }
 
 #[derive(Deserialize)]
