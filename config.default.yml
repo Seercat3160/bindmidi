@@ -1,7 +1,7 @@
-version: 1
+version: 2
 verbose: false
 bindings:
-  60:
+  C4:
     - bind: Trace
     - bind: MoveMouse
       x: 100
