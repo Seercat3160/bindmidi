@@ -43,9 +43,9 @@ pub(crate) enum MouseButton {
     Right,
 }
 
-impl Into<enigo::MouseButton> for MouseButton {
-    fn into(self) -> enigo::MouseButton {
-        match self {
+impl From<MouseButton> for enigo::MouseButton {
+    fn from(value: MouseButton) -> Self {
+        match value {
             MouseButton::Left => enigo::MouseButton::Left,
             MouseButton::Right => enigo::MouseButton::Right,
         }

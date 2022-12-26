@@ -10,6 +10,8 @@ on:
 
 env:
   CARGO_TERM_COLOR: always
+  RUSTFLAGS: -Dwarnings
+
 
 jobs:
   build:
@@ -39,12 +41,14 @@ jobs:
           sudo apt-get install libxdo-dev
       - name: Check Formatting
         run: cargo fmt --check
+      - name: Lint
+        run: cargo clippy --all-targets --all-features --release
       - name: Build
         run: cargo build --verbose --release
       - name: Test
         run: cargo test --verbose --release
-      - name: Upload a Build Artifact
-        uses: actions/upload-artifact@v3.1.0
+      - name: Upload Build Artifact
+        uses: actions/upload-artifact@v3
         with:
           name: ${{ matrix.os-name }}
           path: ${{ matrix.artifact-path }}
