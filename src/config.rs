@@ -1,12 +1,13 @@
 use std::collections::HashMap;
 
+use musical_scales::Pitch;
 use serde::Deserialize;
 
 #[derive(Deserialize)]
 pub(crate) struct Midi2keyConfig {
     pub(crate) version: u8,
     pub(crate) verbose: bool,
-    pub(crate) bindings: HashMap<u8, Vec<Binding>>,
+    pub(crate) bindings: HashMap<Pitch, Vec<Binding>>,
 }
 
 #[derive(Deserialize)]

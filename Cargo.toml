@@ -15,6 +15,7 @@ log = "0.4"
 serde = {version = "1.0", features = ["derive"]}
 serde_yaml = "0.9"
 enigo = "0.0.14"
+musical_scales = { git = "https://github.com/Seercat3160/musical_scales" }
 
 [build-dependencies]
 winres = "0.1"

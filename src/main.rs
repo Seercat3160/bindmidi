@@ -2,6 +2,7 @@
 
 mod config;
 use config::{Binding, Midi2keyConfig, StubConfig};
+use musical_scales::Pitch;
 
 use std::error::Error;
 use std::fs::{read_to_string, File};
@@ -18,7 +19,7 @@ use clap::Parser;
 
 use log::{error, info, warn};
 
-static CONFIG_VERSION: u8 = 1;
+static CONFIG_VERSION: u8 = 2;
 
 #[cfg(test)]
 mod test;
@@ -131,7 +132,7 @@ fn run(config: Midi2keyConfig) -> Result<(), Box<dyn Error>> {
                             }
 
                             // Check if key bound in config, and if so execute any bindings
-                            match config.bindings.get(&key) {
+                            match config.bindings.get(&Pitch::from_midi_note(key.clone())) {
                                 Some(i) => {
                                     for binding in i {
                                         invoke_binding(
@@ -155,7 +156,7 @@ fn run(config: Midi2keyConfig) -> Result<(), Box<dyn Error>> {
                             }
 
                             // Check if key bound in config, and if so execute any bindings
-                            match config.bindings.get(&key) {
+                            match config.bindings.get(&Pitch::from_midi_note(key.clone())) {
                                 Some(i) => {
                                     for binding in i {
                                         invoke_binding(
