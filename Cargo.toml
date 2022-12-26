@@ -19,3 +19,9 @@ musical_scales = { git = "https://github.com/Seercat3160/musical_scales" }
 
 [build-dependencies]
 winres = "0.1"
+
+[profile.release]
+strip = true
+opt-level = "z"
+lto = true
+codegen-units = 1

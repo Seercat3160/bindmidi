@@ -1,4 +1,5 @@
-use crate::{config::Midi2keyConfig, CONFIG_VERSION};
+use crate::common::config::Midi2keyConfig;
+use crate::CONFIG_VERSION;
 
 #[test]
 fn default_config_is_valid() {

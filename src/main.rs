@@ -1,7 +1,10 @@
 // Code from github.com/seercat3160/midi2key, under the MIT license
 
-mod config;
-use config::{Binding, Midi2keyConfig, StubConfig};
+#![warn(clippy::pedantic)]
+
+mod common;
+use common::config::{Binding, Midi2keyConfig, StubConfig};
+
 use musical_scales::Pitch;
 
 use std::error::Error;
@@ -10,7 +13,7 @@ use std::io::{stdin, stdout, Write};
 use std::path::Path;
 use std::process::exit;
 
-use enigo::{Enigo, Key, KeyboardControllable, MouseButton, MouseControllable};
+use enigo::{Enigo, Key, KeyboardControllable, MouseControllable};
 
 use midir::{Ignore, MidiInput};
 use midly::{live::LiveEvent, MidiMessage};
@@ -57,12 +60,12 @@ fn main() {
         serde_yaml::from_str(&config_file_contents).expect("Invalid config file!");
 
     // Program argument overrides the config file
-    if args.verbose == true {
+    if args.verbose {
         config.verbose = true;
     }
 
     // Exit if there are no bindings setup in the config (and verbose mode isn't enabled as this can be used to figure out which key is which note number in order to write the config)
-    if config.bindings.len() == 0 && config.verbose == false {
+    if config.bindings.is_empty() && !config.verbose {
         error!("The current config file contains no bindings - exiting!");
         exit(1);
     }
@@ -73,7 +76,7 @@ fn main() {
 
     match run(config) {
         Ok(_) => (),
-        Err(err) => println!("Error: {}", err),
+        Err(err) => println!("Error: {err}"),
     }
 }
 
@@ -98,7 +101,7 @@ fn run(config: Midi2keyConfig) -> Result<(), Box<dyn Error>> {
         _ => {
             println!("\nAvailable input ports:");
             for (i, p) in in_ports.iter().enumerate() {
-                println!("{}: {}", i, midi_in.port_name(p).unwrap());
+                println!("{i}: {}", midi_in.port_name(p).unwrap());
             }
             print!("Please select input port: ");
             stdout().flush()?;
@@ -113,67 +116,47 @@ fn run(config: Midi2keyConfig) -> Result<(), Box<dyn Error>> {
     println!("\nOpening connection");
     let in_port_name = midi_in.port_name(in_port)?;
 
-    // _conn_in needs to be a named parameter, because it needs to be kept alive until the end of the scope
-    let _conn_in = midi_in.connect(
+    #[allow(unused_variables)] // Needs to stay in scope
+    let connection = midi_in.connect(
         in_port,
-        "midir-read-input",
+        "midi2key",
         move |_, message, _| {
-            match LiveEvent::parse(message).unwrap() {
-                LiveEvent::Midi {
-                    channel: _,
-                    message,
-                } => match message {
+            if let LiveEvent::Midi {
+                channel: _,
+                message,
+            } = LiveEvent::parse(message).unwrap()
+            {
+                match message {
                     MidiMessage::NoteOn { key, vel } => {
-                        {
-                            let key = key.as_int();
-                            let vel = vel.as_int();
-                            if config.verbose {
-                                info!("hit note {} with vel {}", key, vel);
-                            }
+                        let key = key.as_int();
+                        let vel = vel.as_int();
+                        if config.verbose {
+                            info!("hit note {} with vel {}", key, vel);
+                        }
 
-                            // Check if key bound in config, and if so execute any bindings
-                            match config.bindings.get(&Pitch::from_midi_note(key.clone())) {
-                                Some(i) => {
-                                    for binding in i {
-                                        invoke_binding(
-                                            binding,
-                                            BindingNoteState::NoteOn,
-                                            &vel,
-                                            &key,
-                                        )
-                                    }
-                                }
-                                None => {}
+                        // Check if key bound in config, and if so execute any bindings
+                        if let Some(i) = config.bindings.get(&Pitch::from_midi_note(key)) {
+                            for binding in i {
+                                invoke_binding(binding, BindingNoteState::NoteOn, vel, key);
                             }
                         };
                     }
                     MidiMessage::NoteOff { key, vel } => {
-                        {
-                            let key = key.as_int();
-                            let vel = vel.as_int();
-                            if config.verbose {
-                                info!("released note {} with vel {}", key, vel);
-                            }
+                        let key = key.as_int();
+                        let vel = vel.as_int();
+                        if config.verbose {
+                            info!("released note {} with vel {}", key, vel);
+                        }
 
-                            // Check if key bound in config, and if so execute any bindings
-                            match config.bindings.get(&Pitch::from_midi_note(key.clone())) {
-                                Some(i) => {
-                                    for binding in i {
-                                        invoke_binding(
-                                            binding,
-                                            BindingNoteState::NoteOff,
-                                            &vel,
-                                            &key,
-                                        )
-                                    }
-                                }
-                                None => {}
+                        // Check if key bound in config, and if so execute any bindings
+                        if let Some(i) = config.bindings.get(&Pitch::from_midi_note(key)) {
+                            for binding in i {
+                                invoke_binding(binding, BindingNoteState::NoteOff, vel, key);
                             }
                         };
                     }
                     _ => {}
-                },
-                _ => {}
+                }
             };
         },
         (),
@@ -191,7 +174,7 @@ fn run(config: Midi2keyConfig) -> Result<(), Box<dyn Error>> {
     Ok(())
 }
 
-fn invoke_binding(binding: &Binding, state: BindingNoteState, vel: &u8, key: &u8) {
+fn invoke_binding(binding: &Binding, state: BindingNoteState, vel: u8, key: u8) {
     use BindingNoteState::{NoteOff, NoteOn};
 
     let mut enigo = Enigo::new();
@@ -207,63 +190,41 @@ fn invoke_binding(binding: &Binding, state: BindingNoteState, vel: &u8, key: &u8
                 key, vel
             ),
         },
-        Binding::PressKey(b) => match state {
-            NoteOn => {
+        Binding::PressKey(b) => {
+            if let NoteOn = state {
                 enigo.key_click(Key::Layout(b.key));
             }
-            _ => {}
-        },
+        }
         Binding::HoldKey(b) => match state {
             NoteOn => {
                 enigo.key_down(Key::Layout(b.key));
             }
             NoteOff => enigo.key_up(Key::Layout(b.key)),
         },
-        Binding::Click(b) => match state {
-            NoteOn => match b.button {
-                config::MouseButton::Left => {
-                    enigo.mouse_click(MouseButton::Left);
-                }
-                config::MouseButton::Right => {
-                    enigo.mouse_click(MouseButton::Right);
-                }
-            },
-            _ => {}
-        },
+        Binding::Click(b) => {
+            if let NoteOn = state {
+                enigo.mouse_click(b.button.into());
+            }
+        }
         Binding::HoldMouse(b) => match state {
-            NoteOn => match b.button {
-                config::MouseButton::Left => {
-                    enigo.mouse_down(MouseButton::Left);
-                }
-                config::MouseButton::Right => {
-                    enigo.mouse_down(MouseButton::Right);
-                }
-            },
-            NoteOff => match b.button {
-                config::MouseButton::Left => {
-                    enigo.mouse_up(MouseButton::Left);
-                }
-                config::MouseButton::Right => {
-                    enigo.mouse_up(MouseButton::Right);
-                }
-            },
+            NoteOn => enigo.mouse_down(b.button.into()),
+            NoteOff => enigo.mouse_up(b.button.into()),
         },
-        Binding::MoveMouse(b) => match state {
-            NoteOn => {
+        Binding::MoveMouse(b) => {
+            if let NoteOn = state {
                 enigo.mouse_move_relative(b.x, b.y);
             }
-            _ => {}
-        },
-        Binding::Scroll(b) => match state {
-            NoteOn => {
+        }
+        Binding::Scroll(b) => {
+            if let NoteOn = state {
                 enigo.mouse_scroll_x(b.x);
                 enigo.mouse_scroll_y(b.y);
             }
-            _ => {}
-        },
+        }
     }
 }
 
+#[derive(Clone, Copy)]
 enum BindingNoteState {
     NoteOn,
     NoteOff,
