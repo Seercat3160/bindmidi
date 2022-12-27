@@ -4,7 +4,6 @@ version = "0.3.0"
 authors = ["Seercat3160"]
 description = "Bind MIDI notes to keyboard keys and mouse movement"
 edition = "2021"
-build = "src/build.rs"
 
 [dependencies]
 midly = "0.5"
@@ -17,9 +16,6 @@ serde_yaml = "0.9"
 enigo = "0.0.14"
 regex = "1.7"
 lazy_static = "1.4"
-
-[build-dependencies]
-winres = "0.1"
 
 [profile.release]
 strip = true
