@@ -4,8 +4,7 @@
 
 mod common;
 use common::config::{Binding, Midi2keyConfig, StubConfig};
-
-use musical_scales::Pitch;
+use common::note::Pitch;
 
 use std::error::Error;
 use std::fs::{read_to_string, File};
@@ -128,30 +127,30 @@ fn run(config: Midi2keyConfig) -> Result<(), Box<dyn Error>> {
             {
                 match message {
                     MidiMessage::NoteOn { key, vel } => {
-                        let key = key.as_int();
+                        let pitch = Pitch::from_midi(key.as_int());
                         let vel = vel.as_int();
                         if config.verbose {
-                            info!("hit note {} with vel {}", key, vel);
+                            info!("hit note {} with vel {}", pitch, vel);
                         }
 
                         // Check if key bound in config, and if so execute any bindings
-                        if let Some(i) = config.bindings.get(&Pitch::from_midi_note(key)) {
+                        if let Some(i) = config.bindings.get(&pitch) {
                             for binding in i {
-                                invoke_binding(binding, BindingNoteState::NoteOn, vel, key);
+                                invoke_binding(binding, BindingNoteState::NoteOn, vel, pitch);
                             }
                         };
                     }
                     MidiMessage::NoteOff { key, vel } => {
-                        let key = key.as_int();
+                        let pitch = Pitch::from_midi(key.as_int());
                         let vel = vel.as_int();
                         if config.verbose {
                             info!("released note {} with vel {}", key, vel);
                         }
 
                         // Check if key bound in config, and if so execute any bindings
-                        if let Some(i) = config.bindings.get(&Pitch::from_midi_note(key)) {
+                        if let Some(i) = config.bindings.get(&pitch) {
                             for binding in i {
-                                invoke_binding(binding, BindingNoteState::NoteOff, vel, key);
+                                invoke_binding(binding, BindingNoteState::NoteOff, vel, pitch);
                             }
                         };
                     }
@@ -174,7 +173,7 @@ fn run(config: Midi2keyConfig) -> Result<(), Box<dyn Error>> {
     Ok(())
 }
 
-fn invoke_binding(binding: &Binding, state: BindingNoteState, vel: u8, key: u8) {
+fn invoke_binding(binding: &Binding, state: BindingNoteState, vel: u8, pitch: Pitch) {
     use BindingNoteState::{NoteOff, NoteOn};
 
     let mut enigo = Enigo::new();
@@ -183,11 +182,11 @@ fn invoke_binding(binding: &Binding, state: BindingNoteState, vel: u8, key: u8) 
         Binding::Trace => match state {
             NoteOn => warn!(
                 "Trace binding hit during note start! Note: {}, Velocity: {}",
-                key, vel
+                pitch, vel
             ),
             NoteOff => warn!(
                 "Trace binding hit during note release! Note: {}, Velocity: {}",
-                key, vel
+                pitch, vel
             ),
         },
         Binding::PressKey(b) => {

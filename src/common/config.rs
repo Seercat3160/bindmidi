@@ -1,7 +1,8 @@
 use std::collections::HashMap;
 
-use musical_scales::Pitch;
 use serde::Deserialize;
+
+use crate::common::note::Pitch;
 
 #[derive(Deserialize)]
 pub(crate) struct Midi2keyConfig {
