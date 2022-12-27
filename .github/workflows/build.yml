@@ -54,3 +54,35 @@ jobs:
         with:
           name: ${{ matrix.os-name }}
           path: ${{ matrix.artifact-path }}
+  
+  release:
+    if: ${{ github.ref_type == 'tag' }}
+
+    runs-on: ubuntu-latest
+    name: Release Built Artifacts
+
+    needs: build
+
+    permissions:
+      contents: write
+    
+    steps:
+      - name: Download 
+        uses: actions/download-artifact@v3
+        with:
+          path: artifacts
+      - name: Create Release
+        uses: softprops/action-gh-release@v1
+        with:
+          draft: true
+          generate_release_notes: true
+          body: |
+            | File           | Description          | SHA-256 Checksum                                 |
+            |----------------|----------------------|--------------------------------------------------|
+            | `midi2key`     | Linux amd64 binary   | ${{ hashFiles('artifacts/Linux/midi2key') }}       |
+            | `midi2key.exe` | Windows amd64 binary | ${{ hashFiles('artifacts/Windows/midi2key.exe') }} |
+          files: |
+            artifacts/Linux/midi2key
+            artifacts/Windows/midi2key.exe
+
+        
