@@ -15,16 +15,15 @@ It has been tested on Windows and Linux (X11), and should theoretically work on 
 - [x] Mouse movement
 - [x] Scrolling
 - [ ] Typing arbitrary strings
-- [ ] Continuous mouse movement while holding note
+- [ ] Continuous mouse movement or scrolling while holding note
 - [ ] GUI for configuration and monitoring
-- [ ] Useful documentation for configuration
 - [ ] Wayland support
 
 ## Installation
 
 ### Pre-built binaries
 
-You can visit [GitHub Releases](https://github.com/Seercat3160/midi2key/releases) to download the latest release binary. These should be ready to use, but currently only exist for Windows.
+Visit [GitHub Releases](https://github.com/Seercat3160/midi2key/releases) to download the latest release binary for Windows and Linux.
 
 ## Usage
 
@@ -49,6 +48,8 @@ You will be prompted to select which MIDI device to use if multiple are connecte
 ## Configuration
 
 To run the program, a config file must be present at either "config.yml" in the directory which the executable is being run from, or at the path specified by the command line option `--config`. If this file is not present, it will be created and pre-filled with the contents of `config.default.yml` in this repository.
+
+To add bindings to the config, follow the example of the default config. Specify the note in the `bindings` map using [Scientific Pitch Notation](https://en.wikipedia.org/wiki/Scientific_pitch_notation), and then give an array of objects where the type of binding is given as `bind` and any arguments for that binding are also given. For all available bindings and their arguments, see below. Note that in the note names sharps must be typed as `#` and flats as `b`, and that bindings will be executed in the order they are specified.
 
 ### Available binding types
 
@@ -86,6 +87,6 @@ To run the program, a config file must be present at either "config.yml" in the 
 
 First of all, thank you for considering contributing to this side project of mine.
 
-It's just a standard Cargo setup, nothing out of the ordinary. However, make sure you have [rustfmt](https://github.com/rust-lang/rustfmt) installed, and run it before commiting. Otherwise, the GitHub Actions-based checks will fail and your code won't be merged.
+Before committing, run [rustfmt](https://github.com/rust-lang/rustfmt) and [Clippy](https://github.com/rust-lang/rust-clippy) to ensure correct code style and practices. These checks are run in CI, so if anything's failing with them, the PR can't be merged. NB: Use the latest stable toolchain.
 
 To test the software without connecting a real MIDI device, [VMPK](https://sourceforge.net/projects/vmpk/) can be used.
