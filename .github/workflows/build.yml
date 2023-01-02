@@ -17,7 +17,7 @@ jobs:
   build:
     strategy:
       matrix:
-        os: [ubuntu-latest, windows-latest]
+        os: [ubuntu-latest, windows-latest, macos-latest]
         include:
           - os: windows-latest
             os-name: Windows
@@ -25,6 +25,10 @@ jobs:
               target/release/midi2key.exe
           - os: ubuntu-latest
             os-name: Linux
+            artifact-path: |
+              target/release/midi2key
+          - os: macos-latest
+            os-name: MacOS
             artifact-path: |
               target/release/midi2key
     
