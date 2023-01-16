@@ -83,7 +83,7 @@ fn main() {
 fn run(config: Midi2keyConfig) -> Result<(), Box<dyn Error>> {
     let mut input = String::new();
 
-    let mut midi_in = MidiInput::new("midir reading input")?;
+    let mut midi_in = MidiInput::new("midi2key")?;
     midi_in.ignore(Ignore::None);
 
     // Get an input port (read from console if multiple are available)
