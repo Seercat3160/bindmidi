@@ -25,6 +25,7 @@ pub(crate) enum Binding {
     Click(ClickBinding),
     HoldMouse(HoldMouseBinding),
     MoveMouse(MoveMouseBinding),
+    MoveMouseAbsolute(MoveMouseAbsoluteBinding),
     Scroll(ScrollBinding),
 }
 
@@ -66,6 +67,12 @@ pub(crate) struct HoldMouseBinding {
 #[derive(Deserialize, Default)]
 #[serde(default)]
 pub(crate) struct MoveMouseBinding {
+    pub(crate) x: i32,
+    pub(crate) y: i32,
+}
+
+#[derive(Deserialize, Default)]
+pub(crate) struct MoveMouseAbsoluteBinding {
     pub(crate) x: i32,
     pub(crate) y: i32,
 }

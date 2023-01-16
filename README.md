@@ -77,6 +77,11 @@ To add bindings to the config, follow the example of the default config. Specify
   - **Arguments**:
     - `x`: pixels in the x direction (left and right) - Optional, defaults to 0
     - `y`: pixels in the y direction (up and down) - Optional, defaults to 0
+- `MoveMouseAbsolute`
+  - Moves the mouse to an absolute position on the screen (0,0 is the top left)
+  - **Arguments**:
+    - `x`: pixels in the x direction (left and right)
+    - `y`: pixels in the y direction (up and down)
 - `Scroll`
   - Scrolls the mouse wheel
   - **Arguments**:

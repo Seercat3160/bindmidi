@@ -214,6 +214,11 @@ fn invoke_binding(binding: &Binding, state: BindingNoteState, vel: u8, pitch: Pi
                 enigo.mouse_move_relative(b.x, b.y);
             }
         }
+        Binding::MoveMouseAbsolute(b) => {
+            if let NoteOn = state {
+                enigo.mouse_move_to(b.x, b.y);
+            }
+        }
         Binding::Scroll(b) => {
             if let NoteOn = state {
                 enigo.mouse_scroll_x(b.x);
