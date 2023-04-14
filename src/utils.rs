@@ -1,6 +1,6 @@
 pub mod gui_macros {
     //! Some macros to make it easier to work with the GUI crate without huge amounts of boilerplate
-    
+
     /// Shadow the given variables with their clones
     #[macro_export]
     macro_rules! shadow_clone {

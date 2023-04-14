@@ -37,10 +37,10 @@ fn main() -> anyhow::Result<()> {
 
                         // The following are to be shown/hidden at runtime based on selected action in `combobox_bind_action`
                         // All possible action-specific config values are defined here:
-                        
+
                         // Used for: Press Key, Hold Key
                         (Compact, "Key"): let text_bind_action_key = Entry()
-                        
+
                         // Used for: Click, Hold Click
                         (Compact, "Mouse Button"): let combobox_bind_action_mousebutton = Combobox(selected: 0) {
                             "Left", "Right"
@@ -52,8 +52,8 @@ fn main() -> anyhow::Result<()> {
 
                         // Used for Move Mouse to
                         (Compact, "x Position (px)"): let spinbox_bind_action_xpos = Spinbox(0, i32::MAX)
-                        (Compact, "y Position (px)"): let spinbox_bind_action_ypos = Spinbox(0, i32::MAX)                        
-                        
+                        (Compact, "y Position (px)"): let spinbox_bind_action_ypos = Spinbox(0, i32::MAX)
+
                         // Used for: Scroll
                         (Compact, "Scroll Direction"): let combobox_bind_action_scrolldirection = Combobox(selected: 0) {
                             "Up", "Down", "Left", "Right"
@@ -70,15 +70,24 @@ fn main() -> anyhow::Result<()> {
     }
 
     let mut window = Window::new(&ui, "midi2key", 320, 200, WindowType::NoMenubar);
-    
+
     window.set_child(layout);
     window.show();
 
     let mut event_loop = ui.event_loop();
     event_loop.on_tick({
         shadow_clone!(combobox_bind_action);
-        shadow_clone_mut!(text_bind_action_key, combobox_bind_action_mousebutton, spinbox_bind_action_xpixels, spinbox_bind_action_ypixels, spinbox_bind_action_xpos, spinbox_bind_action_ypos, combobox_bind_action_scrolldirection, spinbox_bind_action_scrollamount);
-        
+        shadow_clone_mut!(
+            text_bind_action_key,
+            combobox_bind_action_mousebutton,
+            spinbox_bind_action_xpixels,
+            spinbox_bind_action_ypixels,
+            spinbox_bind_action_xpos,
+            spinbox_bind_action_ypos,
+            combobox_bind_action_scrolldirection,
+            spinbox_bind_action_scrollamount
+        );
+
         move || {
             // Show/hide action-specific config based on selected bind action
             show_control_only_when!(combobox_bind_action.selected(),
