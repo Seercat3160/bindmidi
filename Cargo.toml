@@ -1,21 +1,12 @@
 [package]
 name = "midi2key"
-version = "0.4.0"
+version = "0.5.0"
 authors = ["Seercat3160"]
 description = "Bind MIDI notes to keyboard keys and mouse movement"
 edition = "2021"
 
 [dependencies]
-midly = "0.5"
-midir = "0.8"
-clap = { version = "4.0", features = ["derive", "unicode"] }
-simple_logger = "4.0"
-log = "0.4"
-serde = {version = "1.0", features = ["derive"]}
-serde_yaml = "0.9"
-enigo = "0.0.14"
-regex = "1.7"
-lazy_static = "1.4"
+
 
 [profile.release]
 strip = true

@@ -1,5 +1,7 @@
 # midi2key
 
+⚠️ **On this branch I'm currently rewriting most of the codebase to allow for better improvements in future and to add GUI support. Don't expect the rest of this README to be correct for this branch.** ⚠️
+
 Bind MIDI notes to keyboard keys and mouse movement.
 
 Midi2key is a simple program, written in Rust, to allow MIDI notes to trigger typing of keys, strings and movement of the mouse and scroll wheel.
