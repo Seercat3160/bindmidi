@@ -4,8 +4,11 @@ version = "0.5.0"
 authors = ["Seercat3160"]
 description = "Bind MIDI notes to keyboard keys and mouse movement"
 edition = "2021"
+license = "MIT OR Apache-2.0"
 
 [dependencies]
+anyhow = "1.0.70"
+libui = { git = "https://github.com/libui-rs/libui", rev = "2009430277baf526a259f8d4593a318b6a1bb3a9" }
 
 
 [profile.release]

@@ -90,10 +90,8 @@ To add bindings to the config, follow the example of the default config. Specify
     - `x`: lines to scroll in the x direction (left and right) - Optional, defaults to 0
     - `y`: lines to scroll in the y direction (up and down) - Optional, defaults to 0
 
-## Development
+### License
 
-First of all, thank you for considering contributing to this side project of mine.
+Licensed under either of [Apache License, Version 2.0](LICENSE-APACHE) or [MIT license](LICENSE-MIT) at your option.
 
-Before committing, run [rustfmt](https://github.com/rust-lang/rustfmt) and [Clippy](https://github.com/rust-lang/rust-clippy) to ensure correct code style and practices. These checks are run in CI, so if anything's failing with them, the PR can't be merged. NB: Use the latest stable toolchain.
-
-To test the software without connecting a real MIDI device, [VMPK](https://sourceforge.net/projects/vmpk/) can be used.
+Unless you explicitly state otherwise, any contribution intentionally submitted for inclusion in this crate by you, as defined in the Apache-2.0 license, shall be dual licensed as above, without any additional terms or conditions.
