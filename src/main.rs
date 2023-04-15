@@ -1,11 +1,32 @@
 #![warn(clippy::pedantic)]
+#![cfg_attr(not(test), windows_subsystem = "windows")]
 
-use libui::prelude::*;
+use std::{cell::RefCell, rc::Rc};
 
+use libui::{
+    controls::{Table, TableModel, TableParameters},
+    prelude::*,
+};
+
+use crate::{config::Bind, statechannel::BindsTableDataAdaptor};
+
+mod config;
+mod note;
+mod state;
+mod statechannel;
 mod utils;
 
 fn main() -> anyhow::Result<()> {
     let ui = UI::init()?;
+
+    let (tx, rx) = crate::statechannel::StateChannel::new();
+    let _handler = std::thread::spawn(move || {
+        let rx = rx;
+        crate::state::handler(&rx);
+    });
+
+    // For debug purposes:
+    tx.set_binds(vec![Bind::default(); 3]);
 
     libui::build! { &ui,
         let layout = HorizontalBox(padded: true) {
@@ -19,6 +40,9 @@ fn main() -> anyhow::Result<()> {
                 // TODO: add table here to show existing binds.
                 // Selected table item will have values filled to the below bind-editing inputs,
                 // clicking update or delete will update the bind from the values of the inputs or delete the bind
+                Stretchy: let container_table_binds = VerticalBox(padded: false) {
+                    // Table gets added into here later, it's not possible with this build! macro so we need a workaround
+                }
                 Compact: let bt_add_bind = Button("New")
                 Compact: let sep_config = HorizontalSeparator()
                 Compact: let label_edit_bind = Label("Edit Selected Bind")
@@ -39,7 +63,7 @@ fn main() -> anyhow::Result<()> {
 
                     // Used for: Click, Hold Click
                     (Compact, "Mouse Button"): let combobox_bind_action_mousebutton = Combobox(selected: 0) {
-                        "Left", "Right"
+                        "Left", "Right", "Middle"
                     }
 
                     // Used for Move Mouse
@@ -63,6 +87,16 @@ fn main() -> anyhow::Result<()> {
             }
         }
     }
+
+    let table_binds_data = Rc::new(RefCell::new(BindsTableDataAdaptor::new(tx)));
+    let table_binds_model = Rc::new(RefCell::new(TableModel::new(table_binds_data)));
+    let table_binds_params = TableParameters::new(table_binds_model);
+    let mut table_binds = Table::new(table_binds_params);
+
+    table_binds.append_text_column("Note", 0, Table::COLUMN_READONLY);
+    table_binds.append_text_column("Action", 1, Table::COLUMN_READONLY);
+
+    container_table_binds.append(table_binds, LayoutStrategy::Stretchy);
 
     // Show/hide action-specific config based on selected bind action
     let mut clean_bind_action_config = {

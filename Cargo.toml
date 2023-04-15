@@ -9,6 +9,8 @@ license = "MIT OR Apache-2.0"
 [dependencies]
 anyhow = "1.0.70"
 libui = { git = "https://github.com/libui-rs/libui", rev = "7da977fdc70b8015db157234e40d9a5f1261b241" }
+musical_scales = "0.2.0"
+oneshot = "0.1.5"
 
 
 [profile.release]
