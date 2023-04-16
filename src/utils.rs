@@ -34,4 +34,17 @@ pub mod gui_macros {
             )+
         }
     }
+
+    /// Enable the given libui controls if the expression matches the given patterns
+    #[macro_export]
+    macro_rules! enable_control_only_when {
+            ( $d:expr, $( $i:ident ),+ ) => {
+                $(
+                    match $d {
+                        true => $i.enable(),
+                        false => $i.disable()
+                    }
+                )+
+            }
+        }
 }

@@ -1,4 +1,5 @@
 #![warn(clippy::pedantic)]
+#![allow(clippy::too_many_lines)]
 #![cfg_attr(not(test), windows_subsystem = "windows")]
 
 use std::{cell::RefCell, rc::Rc};
@@ -8,7 +9,7 @@ use libui::{
     prelude::*,
 };
 
-use crate::{config::Bind, statechannel::BindsTableDataAdaptor};
+use crate::{config::Config, state::State, statechannel::BindsTableDataAdaptor};
 
 mod config;
 mod note;
@@ -19,14 +20,15 @@ mod utils;
 fn main() -> anyhow::Result<()> {
     let ui = UI::init()?;
 
-    let (tx, rx) = crate::statechannel::StateChannel::new();
+    let (state_channel, rx) = crate::statechannel::StateChannel::new();
     let _handler = std::thread::spawn(move || {
         let rx = rx;
-        crate::state::handler(&rx);
-    });
 
-    // For debug purposes:
-    tx.set_binds(vec![Bind::default(); 3]);
+        let config = Config::new_with_prefilled_values_for_debug();
+        let state = State::with_config(config);
+
+        crate::state::handler(&rx, state);
+    });
 
     libui::build! { &ui,
         let layout = HorizontalBox(padded: true) {
@@ -37,18 +39,15 @@ fn main() -> anyhow::Result<()> {
             }
             Stretchy: let config_wrapper = VerticalBox(padded: true) {
                 Compact: let label_table_binds = Label("Configured Binds")
-                // TODO: add table here to show existing binds.
-                // Selected table item will have values filled to the below bind-editing inputs,
-                // clicking update or delete will update the bind from the values of the inputs or delete the bind
                 Stretchy: let container_table_binds = VerticalBox(padded: false) {
-                    // Table gets added into here later, it's not possible with this build! macro so we need a workaround
+                    // Table gets added into here later as it's not possible with this build! macro
                 }
                 Compact: let bt_add_bind = Button("New")
                 Compact: let sep_config = HorizontalSeparator()
                 Compact: let label_edit_bind = Label("Edit Selected Bind")
                 Compact: let form_edit_bind = Form(padded: true) {
-                    (Compact, "Note"): let combobox_bind_note = Combobox(selected: 3) {
-                        "A", "A#", "B", "C", "C#", "D", "D#", "E", "F", "F#", "G"
+                    (Compact, "Note"): let combobox_bind_note = Combobox(selected: 0) {
+                        "C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"
                     }
                     (Compact, "Octave"): let spinbox_bind_octave = Spinbox(-1, 8)
                     (Compact, "Action"): let combobox_bind_action = Combobox(selected: 0) {
@@ -88,7 +87,9 @@ fn main() -> anyhow::Result<()> {
         }
     }
 
-    let table_binds_data = Rc::new(RefCell::new(BindsTableDataAdaptor::new(tx)));
+    let table_binds_data = Rc::new(RefCell::new(BindsTableDataAdaptor::new(
+        state_channel.clone(),
+    )));
     let table_binds_model = Rc::new(RefCell::new(TableModel::new(table_binds_data)));
     let table_binds_params = TableParameters::new(table_binds_model);
     let mut table_binds = Table::new(table_binds_params);
@@ -96,7 +97,7 @@ fn main() -> anyhow::Result<()> {
     table_binds.append_text_column("Note", 0, Table::COLUMN_READONLY);
     table_binds.append_text_column("Action", 1, Table::COLUMN_READONLY);
 
-    container_table_binds.append(table_binds, LayoutStrategy::Stretchy);
+    container_table_binds.append(table_binds.clone(), LayoutStrategy::Stretchy);
 
     // Show/hide action-specific config based on selected bind action
     let mut clean_bind_action_config = {
@@ -124,17 +125,100 @@ fn main() -> anyhow::Result<()> {
             );
         }
     };
-    let _ = &(clean_bind_action_config(0));
-    combobox_bind_action.on_selected(&ui, clean_bind_action_config);
+    let _ = &(clean_bind_action_config(0)); // Run once at startup
+    combobox_bind_action.on_selected(&ui, clean_bind_action_config.clone());
+
+    // Enable bind-editing GUI only if a bind is selected, otherwise disable
+    let mut enable_bind_edit_only_if_needed = {
+        shadow_clone_mut!(form_edit_bind, container_bind_edit_buttons);
+
+        move |has_active_edit_bind| {
+            enable_control_only_when!(
+                has_active_edit_bind,
+                form_edit_bind,
+                container_bind_edit_buttons
+            );
+        }
+    };
+    let _ = &(enable_bind_edit_only_if_needed(false)); // Run once at startup
+
+    // Update data and edit form when binding (de)selected in the table
+    table_binds.on_selection_changed({
+        shadow_clone!(state_channel);
+
+        shadow_clone_mut!(
+            combobox_bind_note,
+            spinbox_bind_octave,
+            combobox_bind_action,
+            text_bind_action_key,
+            combobox_bind_action_mousebutton,
+            spinbox_bind_action_xpixels,
+            spinbox_bind_action_ypixels,
+            spinbox_bind_action_xpos,
+            spinbox_bind_action_ypos,
+            combobox_bind_action_scrolldirection,
+            spinbox_bind_action_scrollamount
+        );
+
+        move |x| {
+            match x.selection().first() {
+                Some(idx) => state_channel.set_active_edit_bind(Some((*idx).try_into().unwrap())),
+                None => state_channel.set_active_edit_bind(None),
+            }
+
+            // In a variable so the blocking message-passing stuff in the state_channel wrapper is only called once
+            let has_active_edit_bind = state_channel.has_active_edit_bind();
+
+            enable_bind_edit_only_if_needed(has_active_edit_bind);
+
+            // Set contents of the bind edit controls with the relevant info for the newly-selected bind
+            if has_active_edit_bind {
+                use config::BindAction as Act;
+
+                let bind = state_channel
+                    .get_active_edit_bind()
+                    .expect("already checked for None with `state_channel.has_active_edit_bind()`");
+
+                combobox_bind_note.set_selected(i32::from(bind.note.get_pitch_class_offset()));
+                spinbox_bind_octave.set_value(i32::from(bind.note.get_octave()));
+
+                let action = bind.action;
+
+                combobox_bind_action.set_selected(i32::from(action.index()));
+                clean_bind_action_config(combobox_bind_action.selected());
+
+                match action {
+                    Act::PressKey(act) | Act::HoldKey(act) => {
+                        text_bind_action_key.set_value(&act.key);
+                    }
+                    Act::Click(act) | Act::HoldClick(act) => {
+                        combobox_bind_action_mousebutton.set_selected(i32::from(act.index()));
+                    }
+                    Act::MoveMouseRelative(act) => {
+                        spinbox_bind_action_xpixels.set_value(act.x);
+                        spinbox_bind_action_ypixels.set_value(act.y);
+                    }
+                    Act::MoveMouseAbsolute(act) => {
+                        spinbox_bind_action_xpos.set_value(act.x);
+                        spinbox_bind_action_ypos.set_value(act.y);
+                    }
+                    Act::Scroll(act) => {
+                        combobox_bind_action_scrolldirection
+                            .set_selected(i32::from(act.direction.index()));
+                        spinbox_bind_action_scrollamount.set_value(act.amount);
+                    }
+                }
+            }
+        }
+    });
 
     let mut window = Window::new(&ui, "midi2key", 600, 400, WindowType::NoMenubar);
-
     window.set_child(layout);
     window.show();
 
     let mut event_loop = ui.event_loop();
     event_loop.on_tick(move || {});
-    event_loop.run();
+    event_loop.run_delay(500);
 
     Ok(())
 }

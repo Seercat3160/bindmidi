@@ -1,16 +1,42 @@
 use std::sync::mpsc;
 
-use crate::{config::Config, statechannel::StateChannelMessage};
+use crate::{
+    config::{Bind, Config},
+    statechannel::StateChannelMessage,
+};
 
-struct State {
+pub struct State {
     config: Config,
+    /// Index of the bind currently being edited in the GUI
+    active_edit_bind: Option<usize>,
 }
 
 impl State {
-    fn new() -> Self {
+    pub fn with_config(config: Config) -> Self {
         State {
-            config: Config::new(),
+            config,
+            active_edit_bind: None,
         }
+    }
+
+    /// Updates which bind is currently being edited in the GUI, so
+    /// we can access it more easily without first having to know anything about it
+    fn set_active_edit_bind(&mut self, idx: Option<usize>) {
+        self.active_edit_bind = idx;
+    }
+
+    /// Returns true if there is an active edit bind, false if not
+    fn has_active_edit_bind(&self) -> bool {
+        self.active_edit_bind.is_some()
+    }
+
+    /// Returns a clone of the current active edit bind, if there is one
+    fn get_active_edit_bind(&self) -> Option<Bind> {
+        self.active_edit_bind.map(|idx| {
+            self.config
+                .get_bind(idx)
+                .expect("active edit bind shouldn't be out-of-bounds")
+        })
     }
 }
 
@@ -33,9 +59,7 @@ macro_rules! handle {
     };
 }
 
-pub fn handler(state_channel_receiver: &mpsc::Receiver<StateChannelMessage>) {
-    let mut state = State::new();
-
+pub fn handler(state_channel_receiver: &mpsc::Receiver<StateChannelMessage>, mut state: State) {
     while let Ok(message) = state_channel_receiver.recv() {
         handle!(message {
             StateChannelMessage::LenBinds => {
@@ -47,8 +71,14 @@ pub fn handler(state_channel_receiver: &mpsc::Receiver<StateChannelMessage>) {
             StateChannelMessage::ActionString: idx => {
                 state.config.get_nice_action_string(idx)
             },
-            StateChannelMessage::SetBinds: binds => {
-                state.config.set_binds(binds)
+            StateChannelMessage::SetActiveEditBind: idx => {
+                state.set_active_edit_bind(idx)
+            },
+            StateChannelMessage::HasActiveEditBind => {
+                state.has_active_edit_bind()
+            },
+            StateChannelMessage::GetActiveEditBind => {
+                state.get_active_edit_bind()
             }
         });
     }

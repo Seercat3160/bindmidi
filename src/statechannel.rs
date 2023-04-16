@@ -17,6 +17,8 @@ impl StateChannel {
         (Arc::new(state_channel), rx)
     }
 
+    //TODO: write a macro to reduce boilerplate here
+
     pub fn len_binds(&self) -> usize {
         let (rtx, rrx) = oneshot::channel::<usize>();
 
@@ -47,14 +49,34 @@ impl StateChannel {
         rrx.recv().expect("can't receive")
     }
 
-    pub fn set_binds(&self, binds: Vec<Bind>) {
+    pub fn set_active_edit_bind(&self, idx: Option<usize>) {
         let (rtx, rrx) = oneshot::channel::<()>();
 
-        let message = StateChannelMessage::SetBinds(rtx, binds);
+        let message = StateChannelMessage::SetActiveEditBind(rtx, idx);
 
         self.tx.send(message).expect("can't send");
 
         rrx.recv().expect("can't receive");
+    }
+
+    pub fn has_active_edit_bind(&self) -> bool {
+        let (rtx, rrx) = oneshot::channel::<bool>();
+
+        let message = StateChannelMessage::HasActiveEditBind(rtx);
+
+        self.tx.send(message).expect("can't send");
+
+        rrx.recv().expect("can't receive")
+    }
+
+    pub fn get_active_edit_bind(&self) -> Option<Bind> {
+        let (rtx, rrx) = oneshot::channel::<Option<Bind>>();
+
+        let message = StateChannelMessage::GetActiveEditBind(rtx);
+
+        self.tx.send(message).expect("can't send");
+
+        rrx.recv().expect("can't receive")
     }
 }
 
@@ -62,7 +84,9 @@ pub enum StateChannelMessage {
     LenBinds(oneshot::Sender<usize>),
     NoteString(oneshot::Sender<anyhow::Result<String>>, usize),
     ActionString(oneshot::Sender<anyhow::Result<String>>, usize),
-    SetBinds(oneshot::Sender<()>, Vec<Bind>),
+    SetActiveEditBind(oneshot::Sender<()>, Option<usize>),
+    HasActiveEditBind(oneshot::Sender<bool>),
+    GetActiveEditBind(oneshot::Sender<Option<Bind>>),
 }
 
 pub struct BindsTableDataAdaptor {
@@ -82,9 +106,8 @@ impl TableDataSource for BindsTableDataAdaptor {
         2
     }
 
-    #[allow(clippy::cast_possible_truncation, clippy::cast_possible_wrap)]
     fn num_rows(&mut self) -> i32 {
-        self.state.len_binds() as i32
+        self.state.len_binds().try_into().unwrap()
     }
 
     fn column_type(&mut self, column: i32) -> libui::controls::TableValueType {
@@ -94,12 +117,13 @@ impl TableDataSource for BindsTableDataAdaptor {
         }
     }
 
-    #[allow(clippy::cast_sign_loss)]
     fn cell(&mut self, column: i32, row: i32) -> libui::controls::TableValue {
+        let row: usize = row.try_into().unwrap();
+
         match column {
             0 => {
                 // Note of that bind
-                match self.state.get_note_string(row as usize) {
+                match self.state.get_note_string(row) {
                     Ok(x) => libui::controls::TableValue::String(x),
                     Err(_) => unreachable!(
                         "binds table row index shouldn't be out of bounds of the vec<bind>"
@@ -108,7 +132,7 @@ impl TableDataSource for BindsTableDataAdaptor {
             }
             1 => {
                 // The bind's action
-                match self.state.get_nice_action_string(row as usize) {
+                match self.state.get_nice_action_string(row) {
                     Ok(x) => libui::controls::TableValue::String(x),
                     Err(_) => unreachable!(
                         "binds table row index shouldn't be out of bounds of the vec<bind>"

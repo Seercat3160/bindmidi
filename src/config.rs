@@ -2,13 +2,45 @@ use anyhow::anyhow;
 
 use crate::note::Note;
 
-pub(crate) struct Config {
+pub struct Config {
     binds: Vec<Bind>,
 }
 
 impl Config {
     pub fn new() -> Self {
         Config { binds: vec![] }
+    }
+
+    //TODO: Remove this when adding and editing binds from GUI is implemented
+    pub fn new_with_prefilled_values_for_debug() -> Self {
+        let mut config = Self::new();
+
+        config.add_bind(Bind::default());
+        config.add_bind(Bind {
+            note: Note::default(),
+            action: BindAction::Click(MouseButton::Left),
+        });
+        config.add_bind(Bind {
+            note: Note::from_midi(73),
+            action: BindAction::Click(MouseButton::Right),
+        });
+
+        config
+    }
+
+    /// Returns a clone of the bind at the given index, if it exists
+    pub fn get_bind(&self, idx: usize) -> anyhow::Result<Bind> {
+        Ok(self
+            .binds
+            .get(idx)
+            .ok_or(anyhow!("index out of bounds for binds"))?
+            .clone())
+    }
+
+    /// Add a bind, returning it's index
+    pub fn add_bind(&mut self, bind: Bind) -> usize {
+        self.binds.push(bind);
+        self.binds.len() - 1
     }
 
     #[allow(unused)] // Will be used in future, when we add the actual program functionality
@@ -25,36 +57,12 @@ impl Config {
             .collect()
     }
 
-    pub fn set_binds(&mut self, binds: Vec<Bind>) {
-        self.binds = binds;
-    }
-
     pub fn get_note_string(&self, idx: usize) -> anyhow::Result<String> {
-        Ok(self
-            .binds
-            .get(idx)
-            .ok_or(anyhow!("index out of bounds for binds"))?
-            .note
-            .clone()
-            .into())
+        Ok(self.get_bind(idx)?.note.into())
     }
 
     pub fn get_nice_action_string(&self, idx: usize) -> anyhow::Result<String> {
-        Ok(match self
-            .binds
-            .get(idx)
-            .ok_or(anyhow!("index out of bounds for binds"))?
-            .action
-        {
-            BindAction::PressKey(_) => "Press Key",
-            BindAction::HoldKey(_) => "Hold Key",
-            BindAction::Click(_) => "Click",
-            BindAction::HoldClick(_) => "Hold Click",
-            BindAction::MoveMouseRelative(_) => "Move Mouse",
-            BindAction::MoveMouseAbsolute(_) => "Move Mouse to",
-            BindAction::Scroll(_) => "Scroll",
-        }
-        .into())
+        Ok(self.get_bind(idx)?.action.name())
     }
 
     pub fn len_binds(&self) -> usize {
@@ -90,11 +98,39 @@ impl Default for BindAction {
     }
 }
 
+impl BindAction {
+    /// Numerical representation of the enum
+    pub fn index(&self) -> u8 {
+        match self {
+            BindAction::PressKey(_) => 0,
+            BindAction::HoldKey(_) => 1,
+            BindAction::Click(_) => 2,
+            BindAction::HoldClick(_) => 3,
+            BindAction::MoveMouseRelative(_) => 4,
+            BindAction::MoveMouseAbsolute(_) => 5,
+            BindAction::Scroll(_) => 6,
+        }
+    }
+
+    /// String representation of the enum
+    pub fn name(&self) -> String {
+        match self {
+            BindAction::PressKey(_) => "Press Key",
+            BindAction::HoldKey(_) => "Hold Key",
+            BindAction::Click(_) => "Click",
+            BindAction::HoldClick(_) => "Hold Click",
+            BindAction::MoveMouseRelative(_) => "Move Mouse",
+            BindAction::MoveMouseAbsolute(_) => "Move Mouse to",
+            BindAction::Scroll(_) => "Scroll",
+        }
+        .into()
+    }
+}
+
 /// Data for an Action simulating a keypress
 #[derive(Clone, Default)]
-#[allow(unused)]
 pub struct KeyboardKeyBindAction {
-    key: String,
+    pub key: String,
 }
 
 /// Data for an Action simulating a mouse click
@@ -107,6 +143,16 @@ pub enum MouseButton {
     Middle,
 }
 
+impl MouseButton {
+    /// Numerical representation of the enum
+    pub fn index(&self) -> u8 {
+        match self {
+            MouseButton::Left => 0,
+            MouseButton::Right => 1,
+            MouseButton::Middle => 2,
+        }
+    }
+}
 /// Data for an Action changing a 2D position to a relative offset
 #[derive(Clone, Default)]
 pub struct RelativePos2D {
@@ -114,29 +160,39 @@ pub struct RelativePos2D {
     pub y: i32,
 }
 
-/// Data for an Action changing a 2D position to an absolute non-negative value
+/// Data for an Action changing a 2D position to an absolute value
 #[derive(Clone, Default)]
-#[allow(unused)]
 pub struct AbsolutePos2D {
-    x: u32,
-    y: u32,
+    pub x: i32,
+    pub y: i32,
 }
 
 /// Data for an Action simulating mouse scroll
 #[derive(Clone, Default)]
-#[allow(unused)]
 pub struct ScrollBindAction {
-    amount: i32,
-    direction: ScrollDirection,
+    pub direction: ScrollDirection,
+    pub amount: i32,
 }
 
 /// Cardinal screen direction
 #[derive(Clone, Default)]
 #[allow(unused)]
-enum ScrollDirection {
+pub enum ScrollDirection {
     Up,
     #[default]
     Down,
     Left,
     Right,
+}
+
+impl ScrollDirection {
+    /// Numerical representation of the enum
+    pub fn index(&self) -> u8 {
+        match self {
+            ScrollDirection::Up => 0,
+            ScrollDirection::Down => 1,
+            ScrollDirection::Left => 2,
+            ScrollDirection::Right => 3,
+        }
+    }
 }
