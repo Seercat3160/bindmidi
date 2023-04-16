@@ -38,7 +38,7 @@ fn main() -> anyhow::Result<()> {
         crate::state::handler(&rx, state);
     });
 
-    libui::build! { &ui,
+    libui::layout! { &ui,
         let layout = HorizontalBox(padded: true) {
             Stretchy: let controls_wrapper = VerticalBox(padded: true) {
                 Compact: let label_status = Label("Status: Not Running")
