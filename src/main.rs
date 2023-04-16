@@ -9,7 +9,15 @@ use libui::{
     prelude::*,
 };
 
-use crate::{config::Config, state::State, statechannel::BindsTableDataAdaptor};
+use crate::{
+    config::{
+        AbsolutePos2D, Bind, BindAction, Config, KeyboardKeyBindAction, RelativePos2D,
+        ScrollBindAction,
+    },
+    note::Note,
+    state::State,
+    statechannel::BindsTableDataAdaptor,
+};
 
 mod config;
 mod note;
@@ -24,7 +32,7 @@ fn main() -> anyhow::Result<()> {
     let _handler = std::thread::spawn(move || {
         let rx = rx;
 
-        let config = Config::new_with_prefilled_values_for_debug();
+        let config = Config::new();
         let state = State::with_config(config);
 
         crate::state::handler(&rx, state);
@@ -80,8 +88,8 @@ fn main() -> anyhow::Result<()> {
                     (Compact, "Scroll Amount"): let spinbox_bind_action_scrollamount = Spinbox(0, i32::MAX)
                 }
                 Compact: let container_bind_edit_buttons = HorizontalBox(padded: true) {
-                    Stretchy: let bt_update_binding = Button("Save")
-                    Stretchy: let bt_delete_binding = Button("Delete")
+                    Stretchy: let bt_update_bind = Button("Save")
+                    Stretchy: let bt_delete_bind = Button("Delete")
                 }
             }
         }
@@ -91,7 +99,7 @@ fn main() -> anyhow::Result<()> {
         state_channel.clone(),
     )));
     let table_binds_model = Rc::new(RefCell::new(TableModel::new(table_binds_data)));
-    let table_binds_params = TableParameters::new(table_binds_model);
+    let table_binds_params = TableParameters::new(table_binds_model.clone());
     let mut table_binds = Table::new(table_binds_params);
 
     table_binds.append_text_column("Note", 0, Table::COLUMN_READONLY);
@@ -142,7 +150,7 @@ fn main() -> anyhow::Result<()> {
     };
     let _ = &(enable_bind_edit_only_if_needed(false)); // Run once at startup
 
-    // Update data and edit form when binding (de)selected in the table
+    // Update data and edit form when bind (de)selected in the table
     table_binds.on_selection_changed({
         shadow_clone!(state_channel);
 
@@ -208,6 +216,123 @@ fn main() -> anyhow::Result<()> {
                         spinbox_bind_action_scrollamount.set_value(act.amount);
                     }
                 }
+            }
+        }
+    });
+
+    // Add new binds via the GUI
+    bt_add_bind.on_clicked({
+        shadow_clone!(state_channel, table_binds_model);
+
+        move |_| {
+            // Create new bind
+            let idx = state_channel.add_default_bind();
+
+            // Notify the table of the new row
+            table_binds_model
+                .borrow()
+                .notify_row_inserted(idx.try_into().unwrap());
+        }
+    });
+
+    // Delete binds via the GUI
+    bt_delete_bind.on_clicked({
+        shadow_clone!(state_channel, table_binds_model);
+
+        move |_| {
+            // Delete the active edit bind
+            let row = state_channel.delete_active_edit_bind();
+
+            if let Some(row) = row {
+                // Notify the table of the removed row
+                table_binds_model
+                    .borrow()
+                    .notify_row_deleted(row.try_into().unwrap());
+            }
+        }
+    });
+
+    // Update binds via the GUI
+    bt_update_bind.on_clicked({
+        shadow_clone!(
+            state_channel,
+            table_binds_model,
+            combobox_bind_note,
+            spinbox_bind_octave,
+            combobox_bind_action,
+            text_bind_action_key,
+            combobox_bind_action_mousebutton,
+            spinbox_bind_action_xpixels,
+            spinbox_bind_action_ypixels,
+            spinbox_bind_action_xpos,
+            spinbox_bind_action_ypos,
+            combobox_bind_action_scrolldirection,
+            spinbox_bind_action_scrollamount
+        );
+
+        #[allow(unreachable_code)]
+        move |_| {
+            // Create a bind from the data in the GUI
+            let bind = Bind {
+                note: {
+                    let pitch_class_offset: u8 = combobox_bind_note.selected().try_into().unwrap();
+                    let octave: i8 = spinbox_bind_octave.value().try_into().unwrap();
+
+                    Note::new(pitch_class_offset, octave)
+                },
+                action: {
+                    match combobox_bind_action.selected() {
+                        0 => BindAction::PressKey(KeyboardKeyBindAction {
+                            key: text_bind_action_key.value(),
+                        }),
+                        1 => BindAction::HoldKey(KeyboardKeyBindAction {
+                            key: text_bind_action_key.value(),
+                        }),
+                        2 => BindAction::Click(match combobox_bind_action_mousebutton.selected() {
+                            0 => config::MouseButton::Left,
+                            1 => config::MouseButton::Right,
+                            2 => config::MouseButton::Middle,
+                            _ => unreachable!("shouldn't be this"),
+                        }),
+                        3 => BindAction::HoldClick(
+                            match combobox_bind_action_mousebutton.selected() {
+                                0 => config::MouseButton::Left,
+                                1 => config::MouseButton::Right,
+                                2 => config::MouseButton::Middle,
+                                _ => unreachable!("shouldn't be this"),
+                            },
+                        ),
+                        4 => BindAction::MoveMouseRelative(RelativePos2D {
+                            x: spinbox_bind_action_xpixels.value(),
+                            y: spinbox_bind_action_ypixels.value(),
+                        }),
+                        5 => BindAction::MoveMouseAbsolute(AbsolutePos2D {
+                            x: spinbox_bind_action_xpos.value(),
+                            y: spinbox_bind_action_ypos.value(),
+                        }),
+                        6 => BindAction::Scroll(ScrollBindAction {
+                            direction: match combobox_bind_action_scrolldirection.selected() {
+                                0 => config::ScrollDirection::Up,
+                                1 => config::ScrollDirection::Down,
+                                2 => config::ScrollDirection::Left,
+                                3 => config::ScrollDirection::Right,
+                                _ => unreachable!("shouldn't be this"),
+                            },
+                            amount: spinbox_bind_action_scrollamount.value(),
+                        }),
+                        _ => unreachable!("shouldn't be this"),
+                    }
+                },
+            };
+
+            // Update the bind
+            let row = state_channel.update_active_edit_bind(bind);
+
+            // Notify the table of the updated row
+            if let Some(row) = row {
+                table_binds_model
+                    .borrow()
+                    .notify_row_changed(row.try_into().unwrap());
             }
         }
     });

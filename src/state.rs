@@ -38,6 +38,39 @@ impl State {
                 .expect("active edit bind shouldn't be out-of-bounds")
         })
     }
+
+    /// Delete the current active edit bind, if there is one set, returning it's previous index
+    fn delete_active_edit_bind(&mut self) -> Option<usize> {
+        if let Some(idx) = self.active_edit_bind {
+            // Delete bind
+            self.config
+                .delete_bind(idx)
+                .expect("active edit bind shouldn't be out-of-bounds");
+
+            // Unset active edit bind
+            self.set_active_edit_bind(None);
+
+            // Return old index of the deleted bind
+            return Some(idx);
+        }
+
+        None
+    }
+
+    /// Set the current active edit bind, if there is one, to the given bind
+    fn update_active_edit_bind(&mut self, bind: Bind) -> Option<usize> {
+        if let Some(idx) = self.active_edit_bind {
+            // Set bind
+            self.config
+                .set_bind(idx, bind)
+                .expect("active edit bind shouldn't be out-of-bounds");
+
+            // Return it's index
+            return Some(idx);
+        }
+
+        None
+    }
 }
 
 macro_rules! handle {
@@ -59,6 +92,7 @@ macro_rules! handle {
     };
 }
 
+/// Thread to do all the non-GUI stuff and communicate with the GUI through message passing
 pub fn handler(state_channel_receiver: &mpsc::Receiver<StateChannelMessage>, mut state: State) {
     while let Ok(message) = state_channel_receiver.recv() {
         handle!(message {
@@ -79,6 +113,15 @@ pub fn handler(state_channel_receiver: &mpsc::Receiver<StateChannelMessage>, mut
             },
             StateChannelMessage::GetActiveEditBind => {
                 state.get_active_edit_bind()
+            },
+            StateChannelMessage::AddDefaultBind => {
+                state.config.add_default_bind()
+            },
+            StateChannelMessage::DeleteActiveEditBind => {
+                state.delete_active_edit_bind()
+            },
+            StateChannelMessage::UpdateActiveEditBind: bind => {
+                state.update_active_edit_bind(bind)
             }
         });
     }

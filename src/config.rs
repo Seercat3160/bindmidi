@@ -1,31 +1,16 @@
-use anyhow::anyhow;
+use anyhow::{anyhow, bail};
 
 use crate::note::Note;
 
+/// Persistent app data, intended to be stored in a file
 pub struct Config {
     binds: Vec<Bind>,
 }
 
 impl Config {
+    /// Create a new, empty data store
     pub fn new() -> Self {
         Config { binds: vec![] }
-    }
-
-    //TODO: Remove this when adding and editing binds from GUI is implemented
-    pub fn new_with_prefilled_values_for_debug() -> Self {
-        let mut config = Self::new();
-
-        config.add_bind(Bind::default());
-        config.add_bind(Bind {
-            note: Note::default(),
-            action: BindAction::Click(MouseButton::Left),
-        });
-        config.add_bind(Bind {
-            note: Note::from_midi(73),
-            action: BindAction::Click(MouseButton::Right),
-        });
-
-        config
     }
 
     /// Returns a clone of the bind at the given index, if it exists
@@ -37,13 +22,31 @@ impl Config {
             .clone())
     }
 
-    /// Add a bind, returning it's index
+    /// Add a given bind, returning it's index
     pub fn add_bind(&mut self, bind: Bind) -> usize {
         self.binds.push(bind);
         self.binds.len() - 1
     }
 
+    /// Create a new bind with a default value, returning it's index
+    pub fn add_default_bind(&mut self) -> usize {
+        self.add_bind(Bind::default())
+    }
+
+    /// Delete the bind at the given index, if it exists
+    pub fn delete_bind(&mut self, idx: usize) -> anyhow::Result<()> {
+        // Check bounds
+        if idx >= self.binds.len() {
+            bail!("index out of bounds for binds");
+        }
+
+        self.binds.remove(idx);
+
+        Ok(())
+    }
+
     #[allow(unused)] // Will be used in future, when we add the actual program functionality
+    /// Returns clones of all binds for the given note
     pub fn get_binds_for_note(&self, note: &Note) -> Vec<Bind> {
         self.binds
             .iter()
@@ -57,16 +60,31 @@ impl Config {
             .collect()
     }
 
+    /// Returns the note for a bind as a human-readable string, if it exists
     pub fn get_note_string(&self, idx: usize) -> anyhow::Result<String> {
         Ok(self.get_bind(idx)?.note.into())
     }
 
+    /// Returns a textual description of the action of a bind, if it exists
     pub fn get_nice_action_string(&self, idx: usize) -> anyhow::Result<String> {
         Ok(self.get_bind(idx)?.action.name())
     }
 
+    /// Returns the current number of binds
     pub fn len_binds(&self) -> usize {
         self.binds.len()
+    }
+
+    /// Set the given index, if in bounds, to the given bind
+    pub fn set_bind(&mut self, idx: usize, bind: Bind) -> anyhow::Result<()> {
+        let idx_bind = self
+            .binds
+            .get_mut(idx)
+            .ok_or(anyhow!("index out of bounds for binds"))?;
+
+        *idx_bind = bind;
+
+        Ok(())
     }
 }
 

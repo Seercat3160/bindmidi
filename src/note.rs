@@ -27,6 +27,12 @@ impl Note {
     pub fn from_midi(midi: u8) -> Self {
         Self { midi }
     }
+
+    pub fn new(pitch_class: u8, octave: i8) -> Self {
+        let pitch_class = PitchClass::from_midi_note(pitch_class);
+
+        Pitch::new(pitch_class, octave).into()
+    }
 }
 
 impl From<Note> for String {
