@@ -8,7 +8,7 @@ license = "MIT OR Apache-2.0"
 
 [dependencies]
 anyhow = "1.0.70"
-libui = { git = "https://github.com/Seercat3160/libui", rev = "564b641f378515bf791be9726d3df6b6e250c850" }
+libui = { git = "https://github.com/libui-rs/libui", rev = "2341698d253b844499695c335ca909d89b04966c" }
 musical_scales = "0.2.0"
 oneshot = "0.1.5"
 
