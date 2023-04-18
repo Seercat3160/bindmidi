@@ -32,7 +32,7 @@ fn main() -> anyhow::Result<()> {
     let _manager_thread = std::thread::spawn(move || {
         let mut state_manager = state_manager;
 
-        state_manager.manage();
+        state_manager.manage().unwrap();
     });
 
     libui::layout! { &ui,
@@ -41,6 +41,12 @@ fn main() -> anyhow::Result<()> {
                 Compact: let label_status = Label("Status: Not Running")
                 Compact: let bt_start = Button("Start")
                 Compact: let bt_stop = Button("Stop")
+                Compact: let sep_controls = HorizontalSeparator()
+                Compact: let form_midi = Form(padded: true) {
+                    (Compact, "MIDI Input"): let combobox_midi_input = Combobox() {
+                        // Filled at runtime with the available MIDI inputs
+                    }
+                }
             }
             Stretchy: let config_wrapper = VerticalBox(padded: true) {
                 Compact: let label_table_binds = Label("Configured Binds")
@@ -332,12 +338,75 @@ fn main() -> anyhow::Result<()> {
         }
     });
 
+    // Set input midi port to use when selected in GUI
+    combobox_midi_input.on_selected(&ui, {
+        shadow_clone!(state_interface);
+
+        move |selection| {
+            state_interface.set_midi_input_port(selection.try_into().unwrap());
+        }
+    });
+
+    // Start from GUI
+    bt_start.disable();
+    bt_start.on_clicked({
+        shadow_clone!(state_interface);
+
+        move |button| {
+            state_interface.start_midi_connection();
+            button.disable();
+        }
+    });
+
+    // Stop from GUI
+    bt_stop.disable();
+    bt_stop.on_clicked({
+        shadow_clone!(state_interface);
+
+        move |button| {
+            state_interface.stop_midi_connection();
+            button.disable();
+        }
+    });
+
     let mut window = Window::new(&ui, "midi2key", 600, 400, WindowType::NoMenubar);
     window.set_child(layout);
     window.show();
 
     let mut event_loop = ui.event_loop();
-    event_loop.on_tick(move || {});
+    event_loop.on_tick({
+        shadow_clone!(state_interface);
+        shadow_clone_mut!(combobox_midi_input, bt_start, bt_stop, label_status);
+
+        move || {
+            // Fill combobox_midi_input with available Midi inputs
+
+            let input_names = state_interface
+                .get_midi_input_names()
+                .expect("error getting midi input names");
+
+            // Skip if we already have the same number - this could have an edge case where the input ports change
+            // but there is the same number of them, but whatever. That seems unlikely.
+            if combobox_midi_input.count() != input_names.len().try_into().unwrap() {
+                combobox_midi_input.clear();
+
+                for name in input_names {
+                    combobox_midi_input.append(&name);
+                }
+            }
+
+            // Enable/disable start and stop buttons based on current status
+
+            let has_midi_connection = state_interface.has_midi_connection();
+            enable_control_only_when!(!has_midi_connection, bt_start);
+            enable_control_only_when!(has_midi_connection, bt_stop);
+            label_status.set_text(if has_midi_connection {
+                "Status: Running"
+            } else {
+                "Status: Not Running"
+            });
+        }
+    });
     event_loop.run_delay(500);
 
     Ok(())

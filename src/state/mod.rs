@@ -1,7 +1,10 @@
 use crate::config::{Bind, Config};
 
+use self::midi::Midi;
+
 pub mod interface;
 pub mod manager;
+pub mod midi;
 pub mod table_data_adaptor;
 
 /// App data used at runtime
@@ -10,6 +13,8 @@ pub struct State {
     config: Config,
     /// Index of the bind currently being edited in the GUI
     active_bind: Option<usize>,
+    /// Runtime MIDI configuration/data
+    midi: Midi,
 }
 
 impl State {
@@ -18,7 +23,39 @@ impl State {
         State {
             config,
             active_bind: None,
+            midi: Midi::default(),
         }
+    }
+
+    /// Start MIDI connection
+    fn start_midi_connection(&mut self, conn_name: &str) -> anyhow::Result<()> {
+        self.midi.start_midi_connection(conn_name)
+    }
+
+    /// Stop MIDI connection
+    fn stop_midi_connection(&mut self) {
+        self.midi.stop_midi_connection();
+    }
+
+    /// Returns true if there is an active midi connection, false if not
+    fn has_midi_connection(&self) -> bool {
+        self.midi.has_open_connection
+    }
+
+    /// Setup Midi input
+    fn init_midi(&mut self, client_name: &str) -> anyhow::Result<()> {
+        self.midi.init_midi(client_name)
+    }
+
+    /// Get the names of all available Midi input ports
+    fn get_midi_input_names(&mut self) -> anyhow::Result<Vec<String>> {
+        self.midi.get_midi_input_names()
+    }
+
+    /// Set the stored Midi input port index to the given index
+    fn set_midi_input_port(&mut self, idx: usize) -> anyhow::Result<()> {
+        self.midi.set_midi_input_port(idx)?;
+        Ok(())
     }
 
     /// Updates which bind is currently being edited in the GUI, so

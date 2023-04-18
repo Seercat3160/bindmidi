@@ -96,6 +96,41 @@ impl StateInterface {
             _ => unimplemented!("wrong response type"),
         }
     }
+
+    pub fn get_midi_input_names(&self) -> anyhow::Result<Vec<String>> {
+        match self.request(StateMessageRequest::MidiInputNames) {
+            StateMessageResponse::MidiInputNames(x) => x,
+            _ => unimplemented!("wrong response type"),
+        }
+    }
+
+    pub fn set_midi_input_port(&self, idx: usize) {
+        match self.request(StateMessageRequest::SetMidiInputPort(idx)) {
+            StateMessageResponse::SetMidiInputPort => (),
+            _ => unimplemented!("wrong response type"),
+        }
+    }
+
+    pub fn start_midi_connection(&self) {
+        match self.request(StateMessageRequest::StartMidiConnection) {
+            StateMessageResponse::StartMidiConnection => (),
+            _ => unimplemented!("wrong response type"),
+        }
+    }
+
+    pub fn stop_midi_connection(&self) {
+        match self.request(StateMessageRequest::StopMidiConnection) {
+            StateMessageResponse::StopMidiConnection => (),
+            _ => unimplemented!("wrong response type"),
+        }
+    }
+
+    pub fn has_midi_connection(&self) -> bool {
+        match self.request(StateMessageRequest::HasMidiConnection) {
+            StateMessageResponse::HasMidiConnection(x) => x,
+            _ => unimplemented!("wrong response type"),
+        }
+    }
 }
 
 pub struct StateMessage {
@@ -113,6 +148,11 @@ pub enum StateMessageRequest {
     AddDefaultBind,
     DeleteActiveBind,
     UpdateActiveBind(Bind),
+    MidiInputNames,
+    SetMidiInputPort(usize),
+    StartMidiConnection,
+    StopMidiConnection,
+    HasMidiConnection,
 }
 
 pub enum StateMessageResponse {
@@ -125,4 +165,9 @@ pub enum StateMessageResponse {
     AddDefaultBind(usize),
     DeleteActiveBind(Option<usize>),
     UpdateActiveBind(Option<usize>),
+    MidiInputNames(anyhow::Result<Vec<String>>),
+    SetMidiInputPort,
+    StartMidiConnection,
+    StopMidiConnection,
+    HasMidiConnection(bool),
 }
