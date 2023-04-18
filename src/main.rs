@@ -1,5 +1,5 @@
 #![warn(clippy::pedantic)]
-#![allow(clippy::too_many_lines)]
+#![allow(clippy::too_many_lines, clippy::module_name_repetitions)]
 #![cfg_attr(not(test), windows_subsystem = "windows")]
 
 use std::{cell::RefCell, rc::Rc};
@@ -15,27 +15,24 @@ use crate::{
         ScrollBindAction,
     },
     note::Note,
-    state::State,
-    statechannel::BindsTableDataAdaptor,
+    state::{manager::StateManager, table_data_adaptor::Adaptor, State},
 };
 
 mod config;
 mod note;
 mod state;
-mod statechannel;
 mod utils;
 
 fn main() -> anyhow::Result<()> {
     let ui = UI::init()?;
 
-    let (state_channel, rx) = crate::statechannel::StateChannel::new();
-    let _handler = std::thread::spawn(move || {
-        let rx = rx;
+    let config = Config::new();
+    let state = State::from_config(config);
+    let (state_manager, state_interface) = StateManager::new(state);
+    let _manager_thread = std::thread::spawn(move || {
+        let mut state_manager = state_manager;
 
-        let config = Config::new();
-        let state = State::with_config(config);
-
-        crate::state::handler(&rx, state);
+        state_manager.manage();
     });
 
     libui::layout! { &ui,
@@ -95,9 +92,7 @@ fn main() -> anyhow::Result<()> {
         }
     }
 
-    let table_binds_data = Rc::new(RefCell::new(BindsTableDataAdaptor::new(
-        state_channel.clone(),
-    )));
+    let table_binds_data = Rc::new(RefCell::new(Adaptor::new(state_interface.clone())));
     let table_binds_model = Rc::new(RefCell::new(TableModel::new(table_binds_data)));
     let table_binds_params = TableParameters::new(table_binds_model.clone());
     let mut table_binds = Table::new(table_binds_params);
@@ -152,7 +147,7 @@ fn main() -> anyhow::Result<()> {
 
     // Update data and edit form when bind (de)selected in the table
     table_binds.on_selection_changed({
-        shadow_clone!(state_channel);
+        shadow_clone!(state_interface);
 
         shadow_clone_mut!(
             combobox_bind_note,
@@ -170,12 +165,12 @@ fn main() -> anyhow::Result<()> {
 
         move |x| {
             match x.selection().first() {
-                Some(idx) => state_channel.set_active_edit_bind(Some((*idx).try_into().unwrap())),
-                None => state_channel.set_active_edit_bind(None),
+                Some(idx) => state_interface.set_active_bind(Some((*idx).try_into().unwrap())),
+                None => state_interface.set_active_bind(None),
             }
 
             // In a variable so the blocking message-passing stuff in the state_channel wrapper is only called once
-            let has_active_edit_bind = state_channel.has_active_edit_bind();
+            let has_active_edit_bind = state_interface.has_active_bind();
 
             enable_bind_edit_only_if_needed(has_active_edit_bind);
 
@@ -183,8 +178,8 @@ fn main() -> anyhow::Result<()> {
             if has_active_edit_bind {
                 use config::BindAction as Act;
 
-                let bind = state_channel
-                    .get_active_edit_bind()
+                let bind = state_interface
+                    .get_active_bind()
                     .expect("already checked for None with `state_channel.has_active_edit_bind()`");
 
                 combobox_bind_note.set_selected(i32::from(bind.note.get_pitch_class_offset()));
@@ -222,11 +217,11 @@ fn main() -> anyhow::Result<()> {
 
     // Add new binds via the GUI
     bt_add_bind.on_clicked({
-        shadow_clone!(state_channel, table_binds_model);
+        shadow_clone!(state_interface, table_binds_model);
 
         move |_| {
             // Create new bind
-            let idx = state_channel.add_default_bind();
+            let idx = state_interface.add_default_bind();
 
             // Notify the table of the new row
             table_binds_model
@@ -237,11 +232,11 @@ fn main() -> anyhow::Result<()> {
 
     // Delete binds via the GUI
     bt_delete_bind.on_clicked({
-        shadow_clone!(state_channel, table_binds_model);
+        shadow_clone!(state_interface, table_binds_model);
 
         move |_| {
             // Delete the active edit bind
-            let row = state_channel.delete_active_edit_bind();
+            let row = state_interface.delete_active_bind();
 
             if let Some(row) = row {
                 // Notify the table of the removed row
@@ -255,7 +250,7 @@ fn main() -> anyhow::Result<()> {
     // Update binds via the GUI
     bt_update_bind.on_clicked({
         shadow_clone!(
-            state_channel,
+            state_interface,
             table_binds_model,
             combobox_bind_note,
             spinbox_bind_octave,
@@ -326,7 +321,7 @@ fn main() -> anyhow::Result<()> {
             };
 
             // Update the bind
-            let row = state_channel.update_active_edit_bind(bind);
+            let row = state_interface.update_active_bind(bind);
 
             // Notify the table of the updated row
             if let Some(row) = row {

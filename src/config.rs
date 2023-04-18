@@ -61,12 +61,12 @@ impl Config {
     }
 
     /// Returns the note for a bind as a human-readable string, if it exists
-    pub fn get_note_string(&self, idx: usize) -> anyhow::Result<String> {
+    pub fn get_bind_note_string(&self, idx: usize) -> anyhow::Result<String> {
         Ok(self.get_bind(idx)?.note.into())
     }
 
     /// Returns a textual description of the action of a bind, if it exists
-    pub fn get_nice_action_string(&self, idx: usize) -> anyhow::Result<String> {
+    pub fn get_bind_action_string(&self, idx: usize) -> anyhow::Result<String> {
         Ok(self.get_bind(idx)?.action.name())
     }
 
