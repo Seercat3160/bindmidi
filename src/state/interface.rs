@@ -1,4 +1,7 @@
-use std::sync::{mpsc, Arc};
+use std::{
+    path::PathBuf,
+    sync::{mpsc, Arc},
+};
 
 use oneshot;
 
@@ -138,6 +141,20 @@ impl StateInterface {
             _ => unimplemented!("wrong response type"),
         }
     }
+
+    pub fn save_config(&self, path: PathBuf) {
+        match self.request(StateMessageRequest::SaveConfig(path)) {
+            StateMessageResponse::SaveConfig => (),
+            _ => unimplemented!("wrong response type"),
+        }
+    }
+
+    pub fn shutdown(&self) {
+        match self.request(StateMessageRequest::Shutdown) {
+            StateMessageResponse::Shutdown => (),
+            _ => unimplemented!("wrong response type"),
+        }
+    }
 }
 
 pub struct StateMessage {
@@ -161,6 +178,8 @@ pub enum StateMessageRequest {
     StopMidiConnection,
     HasMidiConnection,
     ExecuteBindsForNote(Note, u8, BindExecuteState),
+    SaveConfig(PathBuf),
+    Shutdown,
 }
 
 pub enum StateMessageResponse {
@@ -179,4 +198,6 @@ pub enum StateMessageResponse {
     StopMidiConnection,
     HasMidiConnection(bool),
     ExecuteBindsForNote,
+    SaveConfig,
+    Shutdown,
 }

@@ -2,8 +2,10 @@
 #![allow(clippy::too_many_lines, clippy::module_name_repetitions)]
 #![cfg_attr(not(test), windows_subsystem = "windows")]
 
-use std::{cell::RefCell, rc::Rc};
+use std::{cell::RefCell, fs::read_to_string, rc::Rc};
 
+use anyhow::anyhow;
+use directories::ProjectDirs;
 use libui::{
     controls::{Table, TableModel, TableParameters},
     prelude::*,
@@ -25,9 +27,22 @@ mod state;
 mod utils;
 
 fn main() -> anyhow::Result<()> {
-    let ui = UI::init()?;
+    // Determine path for config file
+    let config_dir = ProjectDirs::from("", "", "midi2key")
+        .ok_or(anyhow!("couldn't build config directory"))?
+        .config_dir()
+        .to_path_buf();
+    let config_file_path = config_dir.join("config.json");
 
-    let config = Config::new();
+    // Attempt to deserialize into a Config, or fallback on creating a new Config
+    let config: Config = match read_to_string(&config_file_path) {
+        Ok(config_file_contents) => match serde_json::from_str(&config_file_contents) {
+            Ok(deserialized_config) => deserialized_config,
+            Err(_) => Config::new(),
+        },
+        Err(_) => Config::new(),
+    };
+
     let state = State::from_config(config);
     let (state_manager, state_interface) = StateManager::new(state);
     let _manager_thread = std::thread::spawn(move || {
@@ -35,6 +50,8 @@ fn main() -> anyhow::Result<()> {
 
         state_manager.manage().unwrap();
     });
+
+    let ui = UI::init()?;
 
     libui::layout! { &ui,
         let layout = HorizontalBox(padded: true) {
@@ -225,7 +242,7 @@ fn main() -> anyhow::Result<()> {
 
     // Add new binds via the GUI
     bt_add_bind.on_clicked({
-        shadow_clone!(state_interface, table_binds_model);
+        shadow_clone!(state_interface, table_binds_model, config_file_path);
 
         move |_| {
             // Create new bind
@@ -235,12 +252,15 @@ fn main() -> anyhow::Result<()> {
             table_binds_model
                 .borrow()
                 .notify_row_inserted(idx.try_into().unwrap());
+
+            // Save config to disk
+            state_interface.save_config(config_file_path.clone());
         }
     });
 
     // Delete binds via the GUI
     bt_delete_bind.on_clicked({
-        shadow_clone!(state_interface, table_binds_model);
+        shadow_clone!(state_interface, table_binds_model, config_file_path);
 
         move |_| {
             // Delete the active edit bind
@@ -252,6 +272,9 @@ fn main() -> anyhow::Result<()> {
                     .borrow()
                     .notify_row_deleted(row.try_into().unwrap());
             }
+
+            // Save config to disk
+            state_interface.save_config(config_file_path.clone());
         }
     });
 
@@ -270,7 +293,8 @@ fn main() -> anyhow::Result<()> {
             spinbox_bind_action_xpos,
             spinbox_bind_action_ypos,
             combobox_bind_action_scrolldirection,
-            spinbox_bind_action_scrollamount
+            spinbox_bind_action_scrollamount,
+            config_file_path
         );
 
         move |_| {
@@ -337,6 +361,9 @@ fn main() -> anyhow::Result<()> {
                     .borrow()
                     .notify_row_changed(row.try_into().unwrap());
             }
+
+            // Save config to disk
+            state_interface.save_config(config_file_path.clone());
         }
     });
 
@@ -372,6 +399,7 @@ fn main() -> anyhow::Result<()> {
     });
 
     let mut window = Window::new(&ui, "midi2key", 600, 400, WindowType::NoMenubar);
+
     window.set_child(layout);
     window.show();
 
@@ -389,7 +417,7 @@ fn main() -> anyhow::Result<()> {
 
             // Skip if we already have the same number - this could have an edge case where the input ports change
             // but there is the same number of them, but whatever. That seems unlikely.
-            if combobox_midi_input.count() != input_names.len().try_into().unwrap() {
+            if combobox_midi_input.count() != TryInto::<i32>::try_into(input_names.len()).unwrap() {
                 combobox_midi_input.clear();
 
                 for name in input_names {
@@ -410,6 +438,8 @@ fn main() -> anyhow::Result<()> {
         }
     });
     event_loop.run_delay(500);
+
+    state_interface.shutdown();
 
     Ok(())
 }

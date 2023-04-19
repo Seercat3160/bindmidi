@@ -1,4 +1,6 @@
-use std::sync::Arc;
+use std::{fs, path::PathBuf, sync::Arc};
+
+use serde_json::to_string;
 
 use crate::config::{Bind, Config};
 
@@ -27,6 +29,17 @@ impl State {
             active_bind: None,
             midi: Midi::default(),
         }
+    }
+
+    /// Save the current Config to a file
+    pub fn save_config(&self, path: PathBuf) -> anyhow::Result<()> {
+        let config_string = to_string(&self.config)?;
+
+        fs::create_dir_all(path.parent().expect("invalid path"))?;
+
+        fs::write(path, config_string)?;
+
+        Ok(())
     }
 
     /// Start MIDI connection

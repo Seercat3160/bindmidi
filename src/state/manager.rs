@@ -117,6 +117,19 @@ impl StateManager {
 
                     message.response_channel.send(res::ExecuteBindsForNote)?;
                 }
+                req::SaveConfig(path) => {
+                    self.state.save_config(path)?;
+                    message.response_channel.send(res::SaveConfig)?;
+                }
+                req::Shutdown => {
+                    // Stop MIDI connection (if any)
+                    self.state.stop_midi_connection();
+
+                    message.response_channel.send(res::Shutdown)?;
+
+                    // End this thread by returning
+                    return Ok(());
+                }
             };
         }
 

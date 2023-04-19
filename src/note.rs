@@ -2,8 +2,10 @@ use std::fmt::Display;
 
 use anyhow::bail;
 use musical_scales::{Pitch, PitchClass};
+use serde::{Deserialize, Serialize};
 
-#[derive(PartialEq, Eq, Clone)]
+#[derive(PartialEq, Eq, Clone, Serialize, Deserialize)]
+#[serde(transparent)]
 pub struct Note {
     midi: u8,
 }

@@ -1,8 +1,10 @@
 use anyhow::{anyhow, bail};
+use serde::{Deserialize, Serialize};
 
 use crate::note::Note;
 
 /// Persistent app data, intended to be stored in a file
+#[derive(Serialize, Deserialize)]
 pub struct Config {
     binds: Vec<Bind>,
 }
@@ -88,7 +90,7 @@ impl Config {
 }
 
 /// A mapping of MIDI-note to action
-#[derive(Clone, Default)]
+#[derive(Clone, Default, Serialize, Deserialize)]
 pub struct Bind {
     /// MIDI note number
     pub note: Note,
@@ -97,7 +99,7 @@ pub struct Bind {
 }
 
 /// Action taken when a Bind is executed
-#[derive(Clone)]
+#[derive(Clone, Serialize, Deserialize)]
 pub enum BindAction {
     PressKey(KeyboardKeyBindAction),
     HoldKey(KeyboardKeyBindAction),
@@ -147,13 +149,13 @@ impl BindAction {
 }
 
 /// Data for an Action simulating a keypress
-#[derive(Clone, Default)]
+#[derive(Clone, Default, Serialize, Deserialize)]
 pub struct KeyboardKeyBindAction {
     pub key: String,
 }
 
 /// Data for an Action simulating a mouse click
-#[derive(Clone, Default)]
+#[derive(Clone, Default, Serialize, Deserialize)]
 pub enum MouseButton {
     #[default]
     Left,
@@ -172,28 +174,28 @@ impl MouseButton {
     }
 }
 /// Data for an Action changing a 2D position to a relative offset
-#[derive(Clone, Default)]
+#[derive(Clone, Default, Serialize, Deserialize)]
 pub struct RelativePos2D {
     pub x: i32,
     pub y: i32,
 }
 
 /// Data for an Action changing a 2D position to an absolute value
-#[derive(Clone, Default)]
+#[derive(Clone, Default, Serialize, Deserialize)]
 pub struct AbsolutePos2D {
     pub x: i32,
     pub y: i32,
 }
 
 /// Data for an Action simulating mouse scroll
-#[derive(Clone, Default)]
+#[derive(Clone, Default, Serialize, Deserialize)]
 pub struct ScrollBindAction {
     pub direction: ScrollDirection,
     pub amount: i32,
 }
 
 /// Cardinal screen direction
-#[derive(Clone, Default)]
+#[derive(Clone, Default, Serialize, Deserialize)]
 pub enum ScrollDirection {
     Up,
     #[default]
