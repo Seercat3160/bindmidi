@@ -45,7 +45,6 @@ impl Config {
         Ok(())
     }
 
-    #[allow(unused)] // Will be used in future, when we add the actual program functionality
     /// Returns clones of all binds for the given note
     pub fn get_binds_for_note(&self, note: &Note) -> Vec<Bind> {
         self.binds
@@ -99,7 +98,6 @@ pub struct Bind {
 
 /// Action taken when a Bind is executed
 #[derive(Clone)]
-#[allow(unused)]
 pub enum BindAction {
     PressKey(KeyboardKeyBindAction),
     HoldKey(KeyboardKeyBindAction),
@@ -108,6 +106,7 @@ pub enum BindAction {
     MoveMouseRelative(RelativePos2D),
     MoveMouseAbsolute(AbsolutePos2D),
     Scroll(ScrollBindAction),
+    Debug,
 }
 
 impl Default for BindAction {
@@ -127,6 +126,7 @@ impl BindAction {
             BindAction::MoveMouseRelative(_) => 4,
             BindAction::MoveMouseAbsolute(_) => 5,
             BindAction::Scroll(_) => 6,
+            BindAction::Debug => 7,
         }
     }
 
@@ -140,6 +140,7 @@ impl BindAction {
             BindAction::MoveMouseRelative(_) => "Move Mouse",
             BindAction::MoveMouseAbsolute(_) => "Move Mouse to",
             BindAction::Scroll(_) => "Scroll",
+            BindAction::Debug => "Debug",
         }
         .into()
     }
@@ -153,7 +154,6 @@ pub struct KeyboardKeyBindAction {
 
 /// Data for an Action simulating a mouse click
 #[derive(Clone, Default)]
-#[allow(unused)]
 pub enum MouseButton {
     #[default]
     Left,
@@ -194,7 +194,6 @@ pub struct ScrollBindAction {
 
 /// Cardinal screen direction
 #[derive(Clone, Default)]
-#[allow(unused)]
 pub enum ScrollDirection {
     Up,
     #[default]

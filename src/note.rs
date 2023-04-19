@@ -1,3 +1,5 @@
+use std::fmt::Display;
+
 use anyhow::bail;
 use musical_scales::{Pitch, PitchClass};
 
@@ -9,6 +11,12 @@ pub struct Note {
 impl Default for Note {
     fn default() -> Self {
         Self { midi: 60 }
+    }
+}
+
+impl Display for Note {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.write_str(&String::from(self.clone()))
     }
 }
 

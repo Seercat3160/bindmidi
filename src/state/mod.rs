@@ -1,6 +1,8 @@
+use std::sync::Arc;
+
 use crate::config::{Bind, Config};
 
-use self::midi::Midi;
+use self::{interface::StateInterface, midi::Midi};
 
 pub mod interface;
 pub mod manager;
@@ -28,8 +30,12 @@ impl State {
     }
 
     /// Start MIDI connection
-    fn start_midi_connection(&mut self, conn_name: &str) -> anyhow::Result<()> {
-        self.midi.start_midi_connection(conn_name)
+    fn start_midi_connection(
+        &mut self,
+        conn_name: &str,
+        state_interface: Arc<StateInterface>,
+    ) -> anyhow::Result<()> {
+        self.midi.start_midi_connection(conn_name, state_interface)
     }
 
     /// Stop MIDI connection

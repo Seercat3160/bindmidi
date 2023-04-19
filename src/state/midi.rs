@@ -1,6 +1,12 @@
+use std::sync::Arc;
+
 use anyhow::bail;
 use midir::{MidiInput, MidiInputConnection};
 use midly::live::LiveEvent;
+
+use crate::note::Note;
+
+use super::interface::StateInterface;
 
 #[derive(Default)]
 pub struct Midi {
@@ -11,14 +17,18 @@ pub struct Midi {
     /// Known port names - This is used to cache them so we don't have an input and a connection simultaneously
     port_names: Vec<String>,
     /// Possible MIDI connection
-    connection: Option<MidiInputConnection<()>>,
+    connection: Option<MidiInputConnection<Arc<StateInterface>>>,
     /// Is there an open connection?
     pub has_open_connection: bool,
 }
 
 impl Midi {
     /// Start a new MIDI connection
-    pub fn start_midi_connection(&mut self, conn_name: &str) -> anyhow::Result<()> {
+    pub fn start_midi_connection(
+        &mut self,
+        conn_name: &str,
+        state_interface: Arc<StateInterface>,
+    ) -> anyhow::Result<()> {
         self.init_midi(conn_name)?;
 
         let input = self.input.take().expect("no midi input");
@@ -29,7 +39,7 @@ impl Midi {
             .expect("no midi input ports");
 
         let connection = input
-            .connect(port, conn_name, handle_midi_message, ())
+            .connect(port, conn_name, handle_midi_message, state_interface)
             .expect("couldn't connect");
         self.connection.replace(connection);
 
@@ -104,7 +114,11 @@ impl Midi {
     }
 }
 
-fn handle_midi_message<T>(_timestamp: u64, midi_data: &[u8], _data: &mut T) {
+fn handle_midi_message(
+    _timestamp: u64,
+    midi_data: &[u8],
+    state_interface: &mut Arc<StateInterface>,
+) {
     let event = LiveEvent::parse(midi_data).unwrap();
     if let LiveEvent::Midi {
         channel: _,
@@ -112,11 +126,23 @@ fn handle_midi_message<T>(_timestamp: u64, midi_data: &[u8], _data: &mut T) {
     } = event
     {
         match message {
-            midly::MidiMessage::NoteOff { key: _, vel: _ } => {
-                println!("NoteOff");
+            midly::MidiMessage::NoteOff { key, vel } => {
+                let note = Note::from_midi(key.as_int());
+
+                state_interface.execute_binds(
+                    note,
+                    vel.as_int(),
+                    crate::bind::BindExecuteState::Begin,
+                );
             }
-            midly::MidiMessage::NoteOn { key: _, vel: _ } => {
-                println!("NoteOn");
+            midly::MidiMessage::NoteOn { key, vel } => {
+                let note = Note::from_midi(key.as_int());
+
+                state_interface.execute_binds(
+                    note,
+                    vel.as_int(),
+                    crate::bind::BindExecuteState::Release,
+                );
             }
             _ => (),
         }

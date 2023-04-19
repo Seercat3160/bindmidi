@@ -8,6 +8,7 @@ license = "MIT OR Apache-2.0"
 
 [dependencies]
 anyhow = "1.0.70"
+enigo = "0.1.2"
 libui = { git = "https://github.com/libui-rs/libui", rev = "2341698d253b844499695c335ca909d89b04966c" }
 midir = "0.9.1"
 midly = "0.5.3"

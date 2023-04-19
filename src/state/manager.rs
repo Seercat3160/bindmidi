@@ -1,5 +1,7 @@
 use std::sync::{mpsc::Receiver, Arc};
 
+use crate::bind::Executor;
+
 use super::{
     interface::{
         StateInterface, StateMessage, StateMessageRequest as req, StateMessageResponse as res,
@@ -13,6 +15,10 @@ pub struct StateManager {
     state: State,
     /// Channel for this Manager to receive data from elsewhere
     channel: Receiver<StateMessage>,
+    /// A clone of the sender side of this Manager's channel, so it can start other things which can send data back to it
+    interface: Arc<StateInterface>,
+    /// Interface with the OS to allow for simulating input to execute binds
+    bind_executor: Executor,
 }
 
 impl StateManager {
@@ -23,6 +29,8 @@ impl StateManager {
             Self {
                 state,
                 channel: recv_channel,
+                interface: state_interface.clone(),
+                bind_executor: Executor::new(),
             },
             state_interface,
         )
@@ -87,7 +95,8 @@ impl StateManager {
                     message.response_channel.send(res::SetMidiInputPort)?;
                 }
                 req::StartMidiConnection => {
-                    self.state.start_midi_connection("midi2key")?;
+                    self.state
+                        .start_midi_connection("midi2key", self.interface.clone())?;
                     message.response_channel.send(res::StartMidiConnection)?;
                 }
                 req::StopMidiConnection => {
@@ -98,6 +107,15 @@ impl StateManager {
                     message
                         .response_channel
                         .send(res::HasMidiConnection(self.state.has_midi_connection()))?;
+                }
+                req::ExecuteBindsForNote(note, vel, state) => {
+                    let binds = self.state.config.get_binds_for_note(&note);
+
+                    for bind in binds {
+                        self.bind_executor.execute(&bind, vel, &note, &state)?;
+                    }
+
+                    message.response_channel.send(res::ExecuteBindsForNote)?;
                 }
             };
         }

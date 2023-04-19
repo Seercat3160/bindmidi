@@ -2,15 +2,15 @@ use std::sync::{mpsc, Arc};
 
 use oneshot;
 
-use crate::config::Bind;
+use crate::{bind::BindExecuteState, config::Bind, note::Note};
 
 pub struct StateInterface {
-    channel: mpsc::Sender<StateMessage>,
+    channel: mpsc::SyncSender<StateMessage>,
 }
 
 impl StateInterface {
     pub fn new() -> (Arc<Self>, mpsc::Receiver<StateMessage>) {
-        let (send_channel, recv_channel) = mpsc::channel();
+        let (send_channel, recv_channel) = mpsc::sync_channel(0);
 
         let interface = Self {
             channel: send_channel,
@@ -131,6 +131,13 @@ impl StateInterface {
             _ => unimplemented!("wrong response type"),
         }
     }
+
+    pub fn execute_binds(&self, note: Note, vel: u8, state: BindExecuteState) {
+        match self.request(StateMessageRequest::ExecuteBindsForNote(note, vel, state)) {
+            StateMessageResponse::ExecuteBindsForNote => (),
+            _ => unimplemented!("wrong response type"),
+        }
+    }
 }
 
 pub struct StateMessage {
@@ -153,6 +160,7 @@ pub enum StateMessageRequest {
     StartMidiConnection,
     StopMidiConnection,
     HasMidiConnection,
+    ExecuteBindsForNote(Note, u8, BindExecuteState),
 }
 
 pub enum StateMessageResponse {
@@ -170,4 +178,5 @@ pub enum StateMessageResponse {
     StartMidiConnection,
     StopMidiConnection,
     HasMidiConnection(bool),
+    ExecuteBindsForNote,
 }

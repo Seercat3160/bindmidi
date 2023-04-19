@@ -18,6 +18,7 @@ use crate::{
     state::{manager::StateManager, table_data_adaptor::Adaptor, State},
 };
 
+mod bind;
 mod config;
 mod note;
 mod state;
@@ -62,7 +63,7 @@ fn main() -> anyhow::Result<()> {
                     }
                     (Compact, "Octave"): let spinbox_bind_octave = Spinbox(-1, 8)
                     (Compact, "Action"): let combobox_bind_action = Combobox(selected: 0) {
-                        "Press Key", "Hold Key", "Click", "Hold Click", "Move Mouse" /* Relative */, "Move Mouse to" /* Absolute */, "Scroll"
+                        "Press Key", "Hold Key", "Click", "Hold Click", "Move Mouse" /* Relative */, "Move Mouse to" /* Absolute */, "Scroll", "Debug"
                     }
 
                     // The following are to be shown/hidden at runtime based on selected action in `combobox_bind_action`
@@ -77,8 +78,8 @@ fn main() -> anyhow::Result<()> {
                     }
 
                     // Used for Move Mouse
-                    (Compact, "x Amount (px)"): let spinbox_bind_action_xpixels = Spinbox(0, i32::MAX)
-                    (Compact, "y Amount (px)"): let spinbox_bind_action_ypixels = Spinbox(0, i32::MAX)
+                    (Compact, "x Amount (px)"): let spinbox_bind_action_xpixels = Spinbox()
+                    (Compact, "y Amount (px)"): let spinbox_bind_action_ypixels = Spinbox()
 
                     // Used for Move Mouse to
                     (Compact, "x Position (px)"): let spinbox_bind_action_xpos = Spinbox(0, i32::MAX)
@@ -216,6 +217,7 @@ fn main() -> anyhow::Result<()> {
                             .set_selected(i32::from(act.direction.index()));
                         spinbox_bind_action_scrollamount.set_value(act.amount);
                     }
+                    Act::Debug => {}
                 }
             }
         }
@@ -271,7 +273,6 @@ fn main() -> anyhow::Result<()> {
             spinbox_bind_action_scrollamount
         );
 
-        #[allow(unreachable_code)]
         move |_| {
             // Create a bind from the data in the GUI
             let bind = Bind {
@@ -321,6 +322,7 @@ fn main() -> anyhow::Result<()> {
                             },
                             amount: spinbox_bind_action_scrollamount.value(),
                         }),
+                        7 => BindAction::Debug,
                         _ => unreachable!("shouldn't be this"),
                     }
                 },
