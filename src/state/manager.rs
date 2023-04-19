@@ -17,8 +17,6 @@ pub struct StateManager {
     channel: Receiver<StateMessage>,
     /// A clone of the sender side of this Manager's channel, so it can start other things which can send data back to it
     interface: Arc<StateInterface>,
-    /// Interface with the OS to allow for simulating input to execute binds
-    bind_executor: Executor,
 }
 
 impl StateManager {
@@ -30,7 +28,6 @@ impl StateManager {
                 state,
                 channel: recv_channel,
                 interface: state_interface.clone(),
-                bind_executor: Executor::new(),
             },
             state_interface,
         )
@@ -111,8 +108,10 @@ impl StateManager {
                 req::ExecuteBindsForNote(note, vel, state) => {
                     let binds = self.state.config.get_binds_for_note(&note);
 
+                    let mut executor = Executor::new();
+
                     for bind in binds {
-                        self.bind_executor.execute(&bind, vel, &note, &state)?;
+                        executor.execute(&bind, vel, &note, &state)?;
                     }
 
                     message.response_channel.send(res::ExecuteBindsForNote)?;
