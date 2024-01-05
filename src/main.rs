@@ -14,7 +14,7 @@ use libui::{
 use crate::{
     config::{
         AbsolutePos2D, Bind, BindAction, Config, KeyboardKeyBindAction, RelativePos2D,
-        ScrollBindAction,
+        ScrollBindAction, TextBindAction,
     },
     note::Note,
     state::{manager::StateManager, table_data_adaptor::Adaptor, State},
@@ -80,7 +80,7 @@ fn main() -> anyhow::Result<()> {
                     }
                     (Compact, "Octave"): let spinbox_bind_octave = Spinbox(-1, 8)
                     (Compact, "Action"): let combobox_bind_action = Combobox(selected: 0) {
-                        "Press Key", "Hold Key", "Click", "Hold Click", "Move Mouse" /* Relative */, "Move Mouse to" /* Absolute */, "Scroll", "Debug"
+                        "Press Key", "Hold Key", "Click", "Hold Click", "Move Mouse" /* Relative */, "Move Mouse to" /* Absolute */, "Scroll", "Text" /* Types arbitrary text */, "Debug"
                     }
 
                     // The following are to be shown/hidden at runtime based on selected action in `combobox_bind_action`
@@ -107,6 +107,9 @@ fn main() -> anyhow::Result<()> {
                         "Up", "Down", "Left", "Right"
                     }
                     (Compact, "Scroll Amount"): let spinbox_bind_action_scrollamount = Spinbox(0, i32::MAX)
+
+                    // Used for: Text
+                    (Compact, "Text"): let text_bind_action_text = Entry()
                 }
                 Compact: let container_bind_edit_buttons = HorizontalBox(padded: true) {
                     Stretchy: let bt_update_bind = Button("Save")
@@ -136,7 +139,8 @@ fn main() -> anyhow::Result<()> {
             spinbox_bind_action_xpos,
             spinbox_bind_action_ypos,
             combobox_bind_action_scrolldirection,
-            spinbox_bind_action_scrollamount
+            spinbox_bind_action_scrollamount,
+            text_bind_action_text
         );
 
         move |selected| {
@@ -148,7 +152,8 @@ fn main() -> anyhow::Result<()> {
                 spinbox_bind_action_xpos: 5,
                 spinbox_bind_action_ypos: 5,
                 combobox_bind_action_scrolldirection: 6,
-                spinbox_bind_action_scrollamount: 6
+                spinbox_bind_action_scrollamount: 6,
+                text_bind_action_text: 7
             );
         }
     };
@@ -184,7 +189,8 @@ fn main() -> anyhow::Result<()> {
             spinbox_bind_action_xpos,
             spinbox_bind_action_ypos,
             combobox_bind_action_scrolldirection,
-            spinbox_bind_action_scrollamount
+            spinbox_bind_action_scrollamount,
+            text_bind_action_text
         );
 
         move |x| {
@@ -233,6 +239,9 @@ fn main() -> anyhow::Result<()> {
                         combobox_bind_action_scrolldirection
                             .set_selected(i32::from(act.direction.index()));
                         spinbox_bind_action_scrollamount.set_value(act.amount);
+                    }
+                    Act::Text(act) => {
+                        text_bind_action_text.set_value(&act.text);
                     }
                     Act::Debug => {}
                 }
@@ -294,6 +303,7 @@ fn main() -> anyhow::Result<()> {
             spinbox_bind_action_ypos,
             combobox_bind_action_scrolldirection,
             spinbox_bind_action_scrollamount,
+            text_bind_action_text,
             config_file_path
         );
 
@@ -346,7 +356,10 @@ fn main() -> anyhow::Result<()> {
                             },
                             amount: spinbox_bind_action_scrollamount.value(),
                         }),
-                        7 => BindAction::Debug,
+                        7 => BindAction::Text(TextBindAction {
+                            text: text_bind_action_text.value(),
+                        }),
+                        8 => BindAction::Debug,
                         _ => unreachable!("shouldn't be this"),
                     }
                 },

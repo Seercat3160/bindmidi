@@ -108,6 +108,11 @@ impl Executor {
                     self.runtime.mouse_scroll_y(scroll_y);
                 }
             }
+            crate::config::BindAction::Text(param) => {
+                if let BindExecuteState::Begin = state {
+                    self.runtime.key_sequence(&param.text);
+                }
+            }
         };
 
         Ok(())

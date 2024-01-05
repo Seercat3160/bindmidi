@@ -108,6 +108,7 @@ pub enum BindAction {
     MoveMouseRelative(RelativePos2D),
     MoveMouseAbsolute(AbsolutePos2D),
     Scroll(ScrollBindAction),
+    Text(TextBindAction),
     Debug,
 }
 
@@ -128,7 +129,8 @@ impl BindAction {
             BindAction::MoveMouseRelative(_) => 4,
             BindAction::MoveMouseAbsolute(_) => 5,
             BindAction::Scroll(_) => 6,
-            BindAction::Debug => 7,
+            BindAction::Text(_) => 7,
+            BindAction::Debug => 8,
         }
     }
 
@@ -142,6 +144,7 @@ impl BindAction {
             BindAction::MoveMouseRelative(_) => "Move Mouse",
             BindAction::MoveMouseAbsolute(_) => "Move Mouse to",
             BindAction::Scroll(_) => "Scroll",
+            BindAction::Text(_) => "Text",
             BindAction::Debug => "Debug",
         }
         .into()
@@ -214,4 +217,10 @@ impl ScrollDirection {
             ScrollDirection::Right => 3,
         }
     }
+}
+
+/// Data for an Action typing a string of text
+#[derive(Clone, Default, Serialize, Deserialize)]
+pub struct TextBindAction {
+    pub text: String,
 }

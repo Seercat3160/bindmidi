@@ -16,9 +16,9 @@ It has been tested on Windows and Linux (X11), and should theoretically work on 
 - [x] Mouse click
 - [x] Mouse movement
 - [x] Scrolling
-- [ ] Typing arbitrary strings
+- [x] Typing arbitrary strings
+- [x] GUI for configuration and monitoring
 - [ ] Continuous mouse movement or scrolling while holding note
-- [ ] GUI for configuration and monitoring
 - [ ] Wayland support
 
 ## Installation

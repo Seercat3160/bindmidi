@@ -9,7 +9,7 @@ license = "MIT OR Apache-2.0"
 [dependencies]
 anyhow = "1.0.70"
 directories = "5.0"
-enigo = "0.1.2"
+enigo = "0.1.3"
 libui = "0.3.0"
 midir = "0.9.1"
 midly = "0.5.3"
