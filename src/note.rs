@@ -69,7 +69,9 @@ impl TryFrom<&str> for Note {
     type Error = anyhow::Error;
 
     fn try_from(value: &str) -> Result<Self, Self::Error> {
-        let Ok(pitch) = musical_scales::Pitch::try_from(value) else { bail!("Unable to parse") };
+        let Ok(pitch) = musical_scales::Pitch::try_from(value) else {
+            bail!("Unable to parse")
+        };
 
         Ok(pitch.into())
     }

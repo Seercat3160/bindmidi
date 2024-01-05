@@ -152,7 +152,7 @@ fn main() -> anyhow::Result<()> {
             );
         }
     };
-    let _ = &(clean_bind_action_config(0)); // Run once at startup
+    (clean_bind_action_config(0)); // Run once at startup
     combobox_bind_action.on_selected(&ui, clean_bind_action_config.clone());
 
     // Enable bind-editing GUI only if a bind is selected, otherwise disable
@@ -167,7 +167,7 @@ fn main() -> anyhow::Result<()> {
             );
         }
     };
-    let _ = &(enable_bind_edit_only_if_needed(false)); // Run once at startup
+    (enable_bind_edit_only_if_needed(false)); // Run once at startup
 
     // Update data and edit form when bind (de)selected in the table
     table_binds.on_selection_changed({
