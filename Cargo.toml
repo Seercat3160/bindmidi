@@ -1,6 +1,6 @@
 [package]
 name = "bindmidi"
-version = "0.5.0"
+version = "1.0.0"
 authors = ["Seercat3160"]
 description = "Bind MIDI notes to keyboard keys and mouse movement"
 edition = "2021"
