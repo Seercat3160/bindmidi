@@ -42,15 +42,15 @@ jobs:
           - os: windows-latest
             os-name: Windows
             artifact-path: |
-              target/release/midi2key.exe
+              target/release/bindmidi.exe
           - os: ubuntu-latest
             os-name: Linux
             artifact-path: |
-              target/release/midi2key
+              target/release/bindmidi
           - os: macos-latest
             os-name: MacOS
             artifact-path: |
-              target/release/midi2key
+              target/release/bindmidi
     
     runs-on: ${{ matrix.os }}
     name: ${{ matrix.os-name }} Build
@@ -101,10 +101,10 @@ jobs:
           body: |
             | File           | Description          | SHA-256 Checksum                                 |
             |----------------|----------------------|--------------------------------------------------|
-            | `midi2key`     | Linux amd64 binary   | ${{ hashFiles('artifacts/Linux/midi2key') }}       |
-            | `midi2key.exe` | Windows amd64 binary | ${{ hashFiles('artifacts/Windows/midi2key.exe') }} |
+            | `bindmidi`     | Linux amd64 binary   | ${{ hashFiles('artifacts/Linux/bindmidi') }}       |
+            | `bindmidi.exe` | Windows amd64 binary | ${{ hashFiles('artifacts/Windows/bindmidi.exe') }} |
           files: |
-            artifacts/Linux/midi2key
-            artifacts/Windows/midi2key.exe
+            artifacts/Linux/bindmidi
+            artifacts/Windows/bindmidi.exe
 
         
