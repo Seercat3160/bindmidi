@@ -28,7 +28,7 @@ mod utils;
 
 fn main() -> anyhow::Result<()> {
     // Determine path for config file
-    let config_dir = ProjectDirs::from("", "", "midi2key")
+    let config_dir = ProjectDirs::from("", "", "bindmidi")
         .ok_or(anyhow!("couldn't build config directory"))?
         .config_dir()
         .to_path_buf();
@@ -411,7 +411,7 @@ fn main() -> anyhow::Result<()> {
         }
     });
 
-    let mut window = Window::new(&ui, "midi2key", 600, 400, WindowType::NoMenubar);
+    let mut window = Window::new(&ui, "bindmidi", 600, 400, WindowType::NoMenubar);
 
     window.set_child(layout);
     window.show();

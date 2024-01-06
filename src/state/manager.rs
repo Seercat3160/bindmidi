@@ -34,7 +34,7 @@ impl StateManager {
     }
 
     pub fn manage(&mut self) -> anyhow::Result<()> {
-        self.state.init_midi("midi2key")?;
+        self.state.init_midi("bindmidi")?;
 
         while let Ok(message) = self.channel.recv() {
             match message.request {
@@ -93,7 +93,7 @@ impl StateManager {
                 }
                 req::StartMidiConnection => {
                     self.state
-                        .start_midi_connection("midi2key", self.interface.clone())?;
+                        .start_midi_connection("bindmidi", self.interface.clone())?;
                     message.response_channel.send(res::StartMidiConnection)?;
                 }
                 req::StopMidiConnection => {

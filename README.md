@@ -1,12 +1,12 @@
-# midi2key
+# bindmidi
 
 Conveniently bind MIDI notes to keyboard keys, mouse movement, and more!
 
-midi2key is a program in Rust which provides a native GUI for the management and use of bindings from MIDI notes to actions taken on the system.
+bindmidi is a program in Rust which provides a native GUI for the management and use of bindings from MIDI notes to actions taken on the system.
 
 It has been tested on Windows and Linux (X11), and should theoretically work on MacOS as well. Linux Wayland support is not currently available, but planned.
 
-[![Build Status](https://github.com/Seercat3160/midi2key/actions/workflows/build.yml/badge.svg)](https://github.com/Seercat3160/midi2key/actions/workflows/build.yml)
+[![Build Status](https://github.com/Seercat3160/bindmidi/actions/workflows/build.yml/badge.svg)](https://github.com/Seercat3160/bindmidi/actions/workflows/build.yml)
 
 ## Features
 
@@ -24,7 +24,7 @@ It has been tested on Windows and Linux (X11), and should theoretically work on 
 
 ### Pre-built binaries
 
-Visit [GitHub Releases](https://github.com/Seercat3160/midi2key/releases) to download the latest release binary for Linux and Windows. Alternatively, development builds can be acquired from GitHub Actions.
+Visit [GitHub Releases](https://github.com/Seercat3160/bindmidi/releases) to download the latest release binary for Linux and Windows. Alternatively, development builds can be acquired from GitHub Actions.
 
 On Linux, it may be necessary to install `libxdo-dev` as a runtime dependency. It is packaged on Debian-based distros as `libxdo-dev`, and on Arch in `xdotool`.
 
@@ -42,7 +42,7 @@ Run the executable file. It will open the GUI.
 
 To use the program, select your desired MIDI device in the drop-down menu in the left pane, and use the Start button. To stop, use the stop button. The current status of the program is available at the top of the left pane.
 
-In contrast to previous versions of midi2key, no command-line interface is available, although this is being worked on.
+In contrast to previous versions, no command-line interface is available, although this is being worked on.
 
 ## Configuration
 
@@ -52,9 +52,9 @@ Using the buttons, one can create a new binding. Selecting a binding in the tabl
 
 After editing a binding in the GUI, ensure the "Save" button is used to apply the changes and write them to the persistent configuration file, located as follows:
 
-- Linux: `$XDG_CONFIG_HOME/midi2key/config.json` or `$HOME/.config/midi2key/config.json`
-- Windows: `%APPDATA%\midi2key\config\config.json`
-- MacOS: `$HOME/Library/Application Support/midi2key/config.json`
+- Linux: `$XDG_CONFIG_HOME/bindmidi/config.json` or `$HOME/.config/bindmidi/config.json`
+- Windows: `%APPDATA%\bindmidi\config\config.json`
+- MacOS: `$HOME/Library/Application Support/bindmidi/config.json`
 
 ### Available binding types
 
@@ -70,7 +70,11 @@ What follows is a brief description of the purpose of each available binding act
 - **Text:** Simulates typing of an arbitrary string of text.
 - **Debug:** Prints a debug message to the console output. As an end user, ignore this.
 
-### License
+## Note
+
+bindmidi was previously named midi2key, but renamed to avoid confusion with various similarly-named programs.
+
+## License
 
 Licensed under either of [Apache License, Version 2.0](LICENSE-APACHE) or [MIT license](LICENSE-MIT) at your option.
 
